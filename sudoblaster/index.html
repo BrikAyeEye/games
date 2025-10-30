@@ -1,0 +1,1098 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sudoku Blaster - Battle for Numbers!</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            color: #fff;
+        }
+
+        .container {
+            text-align: center;
+            max-width: 600px;
+            padding: 20px;
+        }
+
+        h1 {
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .subtitle {
+            margin-bottom: 20px;
+            opacity: 0.9;
+            font-size: 14px;
+        }
+
+        .sudoku-board {
+            display: inline-grid;
+            grid-template-columns: repeat(9, 1fr);
+            gap: 2px;
+            background: #333;
+            padding: 4px;
+            border-radius: 8px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            margin-bottom: 20px;
+        }
+
+        .cell {
+            width: 50px;
+            height: 50px;
+            background: white;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 24px;
+            font-weight: bold;
+            color: #000;
+            cursor: pointer;
+            transition: all 0.2s;
+            position: relative;
+        }
+
+        .cell.given {
+            background: #fff;
+            color: #000;
+            cursor: default;
+        }
+
+        .cell:hover:not(.given) {
+            background: #e8f4f8;
+        }
+
+        .cell.selected {
+            background: #bbdefb;
+            outline: 3px solid #2196F3;
+            outline-offset: -3px;
+        }
+
+        .cell .main-number {
+            font-size: 24px;
+            font-weight: bold;
+        }
+
+        .cell .pencil-marks {
+            position: absolute;
+            top: 3px;
+            left: 3px;
+            right: 3px;
+            bottom: 3px;
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            grid-template-rows: repeat(3, 1fr);
+            gap: 1px;
+            font-size: 12px;
+            font-style: italic;
+            color: #2196F3;
+            font-weight: normal;
+            pointer-events: none;
+        }
+
+        .cell .pencil-mark {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 11px;
+            line-height: 1;
+        }
+
+        @keyframes solveFlash {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.2); }
+        }
+
+        .cell:nth-child(3n):not(:nth-child(9n)) {
+            border-right: 3px solid #333;
+        }
+
+        .cell:nth-child(n+19):nth-child(-n+27),
+        .cell:nth-child(n+46):nth-child(-n+54) {
+            border-bottom: 3px solid #333;
+        }
+
+        #gameCanvas {
+            display: none;
+            border-radius: 8px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            background: #000;
+        }
+
+        .instructions {
+            background: rgba(255,255,255,0.1);
+            padding: 15px;
+            border-radius: 10px;
+            margin-top: 20px;
+            backdrop-filter: blur(10px);
+            font-size: 14px;
+            line-height: 1.6;
+        }
+
+        .message {
+            min-height: 30px;
+            margin: 10px 0;
+            font-size: 18px;
+            font-weight: bold;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .game-type {
+            background: rgba(255,215,0,0.3);
+            padding: 10px;
+            border-radius: 8px;
+            margin: 10px 0;
+            font-size: 16px;
+        }
+
+        button {
+            background: #ffd700;
+            color: #333;
+            border: none;
+            padding: 12px 30px;
+            font-size: 16px;
+            font-weight: bold;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+            margin: 5px;
+        }
+
+        button:hover {
+            background: #ffed4e;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0,0,0,0.4);
+        }
+
+        button:active {
+            transform: translateY(0);
+        }
+
+        .button-secondary {
+            background: rgba(255,255,255,0.2);
+            color: white;
+        }
+
+        .button-secondary:hover {
+            background: rgba(255,255,255,0.3);
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        @media (max-width: 600px) {
+            .cell {
+                width: 35px;
+                height: 35px;
+                font-size: 16px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎮 Sudoku Blaster</h1>
+        <p class="subtitle">Sudoku with mini-game boost</p>
+
+        <div class="message" id="message">Click a cell and type numbers!</div>
+        <div class="game-type hidden" id="gameType"></div>
+
+        <div id="sudokuView">
+            <div class="sudoku-board" id="sudokuBoard"></div>
+            <div style="margin-top: 15px;">
+                <button onclick="checkSolution()">✓ Check Solution</button>
+                <button class="button-secondary" onclick="launchMiniGameForSelected()">🎮 Mini-Game (G)</button>
+                <button class="button-secondary" onclick="clearSelected()">Clear Cell (Del)</button>
+            </div>
+        </div>
+
+        <canvas id="gameCanvas" width="500" height="500"></canvas>
+
+        <div class="instructions">
+            <strong>🎯 Sudoku Controls:</strong><br>
+            • <strong>Number (1-9)</strong>: Write main answer (bold)<br>
+            • <strong>Shift + Number</strong>: Toggle pencil mark (italic)<br>
+            • <strong>Delete/Backspace</strong>: Clear cell<br>
+            • <strong>Arrows</strong>: Navigate cells<br>
+            • <strong>G Key</strong>: Launch Asteroid mini-game!<br>
+            <br>
+            <strong>🎮 Asteroid Game - Pure Survival:</strong><br>
+            • Each number (1-9) has unique properties (speed, size, health, break pattern)<br>
+            • <strong>Rotate:</strong> A/D or ←→ | <strong>Thrust:</strong> W or ↑ | <strong>Shoot:</strong> Space<br>
+            • <strong>Goal:</strong> Survive 30s OR destroy enough asteroids<br>
+            • When goal reached: ALL wrong asteroids explode, correct one glows GOLD!<br>
+            • You become INVINCIBLE after goal - can't die!<br>
+            <br>
+            <strong>Asteroid Spawning:</strong><br>
+            • <strong>With pencil marks:</strong> Only those numbers spawn<br>
+            • <strong>Without pencil marks:</strong> Numbers already in row/column/3x3 box spawn (the wrong ones!)
+        </div>
+    </div>
+
+    <script>
+        // Sudoku Engine
+        class SudokuEngine {
+            constructor() {
+                // Simple puzzle (easy difficulty)
+                this.puzzle = [
+                    [5,3,0, 0,7,0, 0,0,0],
+                    [6,0,0, 1,9,5, 0,0,0],
+                    [0,9,8, 0,0,0, 0,6,0],
+                    
+                    [8,0,0, 0,6,0, 0,0,3],
+                    [4,0,0, 8,0,3, 0,0,1],
+                    [7,0,0, 0,2,0, 0,0,6],
+                    
+                    [0,6,0, 0,0,0, 2,8,0],
+                    [0,0,0, 4,1,9, 0,0,5],
+                    [0,0,0, 0,8,0, 0,7,9]
+                ];
+                
+                this.solution = [
+                    [5,3,4, 6,7,8, 9,1,2],
+                    [6,7,2, 1,9,5, 3,4,8],
+                    [1,9,8, 3,4,2, 5,6,7],
+                    
+                    [8,5,9, 7,6,1, 4,2,3],
+                    [4,2,6, 8,5,3, 7,9,1],
+                    [7,1,3, 9,2,4, 8,5,6],
+                    
+                    [9,6,1, 5,3,7, 2,8,4],
+                    [2,8,7, 4,1,9, 6,3,5],
+                    [3,4,5, 2,8,6, 1,7,9]
+                ];
+            }
+
+            getCandidates(row, col) {
+                if (this.puzzle[row][col] !== 0) return [];
+                
+                let candidates = [];
+                for (let num = 1; num <= 9; num++) {
+                    if (this.isValid(row, col, num)) {
+                        candidates.push(num);
+                    }
+                }
+                return candidates;
+            }
+
+            isValid(row, col, num) {
+                // Check row
+                for (let c = 0; c < 9; c++) {
+                    if (this.puzzle[row][c] === num) return false;
+                }
+                
+                // Check column
+                for (let r = 0; r < 9; r++) {
+                    if (this.puzzle[r][col] === num) return false;
+                }
+                
+                // Check 3x3 box
+                let boxRow = Math.floor(row / 3) * 3;
+                let boxCol = Math.floor(col / 3) * 3;
+                for (let r = boxRow; r < boxRow + 3; r++) {
+                    for (let c = boxCol; c < boxCol + 3; c++) {
+                        if (this.puzzle[r][c] === num) return false;
+                    }
+                }
+                
+                return true;
+            }
+
+            getDifficulty(row, col) {
+                let candidates = this.getCandidates(row, col);
+                if (candidates.length <= 2) return 'easy';
+                if (candidates.length <= 4) return 'medium';
+                return 'hard';
+            }
+
+            getCorrectAnswer(row, col) {
+                return this.solution[row][col];
+            }
+
+            solveCell(row, col, value) {
+                if (value === this.solution[row][col]) {
+                    this.puzzle[row][col] = value;
+                    return true;
+                }
+                return false;
+            }
+        }
+
+        // Game State
+        function initPencilMarks() {
+            const marks = [];
+            for (let i = 0; i < 9; i++) {
+                marks[i] = [];
+                for (let j = 0; j < 9; j++) {
+                    marks[i][j] = new Set();
+                }
+            }
+            return marks;
+        }
+
+        const game = {
+            sudoku: new SudokuEngine(),
+            userEntries: Array(9).fill(null).map(() => Array(9).fill(0)), // User's answers
+            pencilMarks: initPencilMarks(), // Pencil marks
+            currentCell: null
+        };
+
+        // UI Elements
+        const sudokuBoard = document.getElementById('sudokuBoard');
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        const message = document.getElementById('message');
+        const gameType = document.getElementById('gameType');
+        const sudokuView = document.getElementById('sudokuView');
+        
+        // Track selected cell
+        let selectedCell = null;
+
+        // Initialize Sudoku Board
+        function renderSudoku() {
+            sudokuBoard.innerHTML = '';
+            for (let row = 0; row < 9; row++) {
+                for (let col = 0; col < 9; col++) {
+                    const cell = document.createElement('div');
+                    cell.className = 'cell';
+                    cell.dataset.row = row;
+                    cell.dataset.col = col;
+                    
+                    const givenValue = game.sudoku.puzzle[row][col];
+                    const userValue = game.userEntries[row][col];
+                    const marks = game.pencilMarks[row][col];
+                    
+                    // Given numbers (from original puzzle)
+                    if (givenValue !== 0) {
+                        const numSpan = document.createElement('span');
+                        numSpan.className = 'main-number';
+                        numSpan.textContent = givenValue;
+                        cell.appendChild(numSpan);
+                        cell.classList.add('given');
+                    } 
+                    // User entered main number
+                    else if (userValue !== 0) {
+                        const numSpan = document.createElement('span');
+                        numSpan.className = 'main-number';
+                        numSpan.textContent = userValue;
+                        cell.appendChild(numSpan);
+                    }
+                    // Pencil marks
+                    else if (marks && marks.size > 0) {
+                        const pencilDiv = document.createElement('div');
+                        pencilDiv.className = 'pencil-marks';
+                        
+                        for (let num = 1; num <= 9; num++) {
+                            const markSpan = document.createElement('span');
+                            markSpan.className = 'pencil-mark';
+                            if (marks.has(num)) {
+                                markSpan.textContent = num;
+                            }
+                            pencilDiv.appendChild(markSpan);
+                        }
+                        
+                        cell.appendChild(pencilDiv);
+                    }
+                    
+                    // Check if this is the selected cell
+                    if (selectedCell && selectedCell.row === row && selectedCell.col === col) {
+                        cell.classList.add('selected');
+                    }
+                    
+                    cell.onclick = () => selectCell(row, col);
+                    
+                    sudokuBoard.appendChild(cell);
+                }
+            }
+        }
+
+        // Cell Selection - Normal Sudoku Style
+        function selectCell(row, col) {
+            // Don't select given cells
+            if (game.sudoku.puzzle[row][col] !== 0) {
+                return;
+            }
+            
+            selectedCell = { row, col };
+            renderSudoku();
+            message.textContent = `Cell (${row+1}, ${col+1}) selected`;
+        }
+
+        function clearSelected() {
+            if (!selectedCell) return;
+            
+            const { row, col } = selectedCell;
+            game.userEntries[row][col] = 0;
+            game.pencilMarks[row][col].clear();
+            renderSudoku();
+            message.textContent = 'Cell cleared!';
+        }
+
+        // Keyboard input for normal Sudoku play
+        window.addEventListener('keydown', (e) => {
+            // Don't handle if mini-game is active
+            if (canvas.style.display === 'block') return;
+            
+            if (!selectedCell) {
+                // G key without selection
+                if (e.key === 'g' || e.key === 'G') {
+                    message.textContent = '⚠️ Select a cell first!';
+                }
+                return;
+            }
+            
+            const { row, col } = selectedCell;
+            
+            // Number keys 1-9 (using e.code to detect physical key, not character)
+            const digitMatch = e.code.match(/^Digit(\d)$/);
+            if (digitMatch) {
+                const num = parseInt(digitMatch[1]);
+                
+                if (e.shiftKey) {
+                    // SHIFT + Number = Pencil mark (toggle)
+                    const marks = game.pencilMarks[row][col];
+                    if (marks.has(num)) {
+                        marks.delete(num);
+                        message.textContent = `🖊️ Removed pencil mark ${num}`;
+                    } else {
+                        marks.add(num);
+                        message.textContent = `🖊️ Added pencil mark ${num}`;
+                    }
+                    // Clear main number if adding pencil marks
+                    game.userEntries[row][col] = 0;
+                } else {
+                    // Number only = Main answer
+                    game.userEntries[row][col] = num;
+                    game.pencilMarks[row][col].clear(); // Clear pencil marks
+                    message.textContent = `Entered ${num}`;
+                }
+                
+                renderSudoku();
+            }
+            
+            // Delete/Backspace to clear
+            if (e.key === 'Delete' || e.key === 'Backspace') {
+                clearSelected();
+            }
+            
+            // G key to launch mini-game
+            if (e.key === 'g' || e.key === 'G') {
+                launchMiniGameForSelected();
+            }
+            
+            // Arrow keys to move selection
+            if (e.key.startsWith('Arrow')) {
+                e.preventDefault();
+                let newRow = row;
+                let newCol = col;
+                
+                if (e.key === 'ArrowUp') newRow = Math.max(0, row - 1);
+                if (e.key === 'ArrowDown') newRow = Math.min(8, row + 1);
+                if (e.key === 'ArrowLeft') newCol = Math.max(0, col - 1);
+                if (e.key === 'ArrowRight') newCol = Math.min(8, col + 1);
+                
+                selectCell(newRow, newCol);
+            }
+        });
+
+        function checkSolution() {
+            let allFilled = true;
+            let allCorrect = true;
+            
+            // Check if all cells are filled and correct
+            for (let row = 0; row < 9; row++) {
+                for (let col = 0; col < 9; col++) {
+                    // Skip given cells
+                    if (game.sudoku.puzzle[row][col] !== 0) continue;
+                    
+                    const userAnswer = game.userEntries[row][col];
+                    const correctAnswer = game.sudoku.solution[row][col];
+                    
+                    if (userAnswer === 0) {
+                        allFilled = false;
+                    } else if (userAnswer !== correctAnswer) {
+                        allCorrect = false;
+                    }
+                }
+            }
+            
+            if (!allFilled) {
+                message.textContent = '⚠️ Puzzle not complete yet! Fill all cells.';
+            } else if (allCorrect) {
+                message.textContent = '🏆 CORRECT! You solved it perfectly!';
+            } else {
+                message.textContent = '❌ WRONG! Some cells are incorrect. Keep trying!';
+            }
+        }
+
+        // Mini-game launcher (optional boost)
+        function launchMiniGameForSelected() {
+            if (!selectedCell) {
+                message.textContent = '⚠️ Select a cell first!';
+                return;
+            }
+            
+            const { row, col } = selectedCell;
+            
+            // Check if it's a given cell
+            if (game.sudoku.puzzle[row][col] !== 0) {
+                message.textContent = '⚠️ Cannot change given cells!';
+                return;
+            }
+            
+            const candidates = game.sudoku.getCandidates(row, col);
+            const difficulty = game.sudoku.getDifficulty(row, col);
+            
+            sudokuView.style.display = 'none';
+            canvas.style.display = 'block';
+            
+            message.textContent = `🎮 Asteroid Mode - Find the correct number!`;
+            gameType.textContent = `Difficulty: ${difficulty.toUpperCase()} | Test these candidates: ${candidates.join(', ')}`;
+            gameType.classList.remove('hidden');
+            
+            game.currentCell = { row, col };
+            new AsteroidGame(row, col);
+        }
+
+        // Asteroid properties for each number (1-9)
+        const ASTEROID_PROPERTIES = {
+            1: { speed: 0.8, size: 20, spin: 0.02, health: 1, breakInto: 0, color: '#FF6B6B' },      // Small, slow, fragile
+            2: { speed: 1.2, size: 22, spin: 0.04, health: 1, breakInto: 2, color: '#4ECDC4' },     // Medium, breaks into 2
+            3: { speed: 1.6, size: 18, spin: 0.08, health: 1, breakInto: 0, color: '#45B7D1' },     // Fast, small
+            4: { speed: 0.6, size: 32, spin: 0.01, health: 2, breakInto: 4, color: '#FFA07A' },     // Huge, slow, breaks into 4
+            5: { speed: 2.0, size: 16, spin: 0.12, health: 1, breakInto: 0, color: '#98D8C8' },     // Very fast, tiny
+            6: { speed: 1.0, size: 26, spin: 0.03, health: 2, breakInto: 0, color: '#F7DC6F' },     // Large, tough
+            7: { speed: 2.5, size: 14, spin: 0.15, health: 1, breakInto: 0, color: '#BB8FCE' },     // Fastest, smallest
+            8: { speed: 0.5, size: 38, spin: 0.01, health: 3, breakInto: 4, color: '#85C1E2' },     // Massive, toughest
+            9: { speed: 1.4, size: 24, spin: 0.06, health: 2, breakInto: 3, color: '#F8B195' }      // Balanced
+        };
+
+        // Mini-Game: Classic Asteroid Mode
+        class AsteroidGame {
+            constructor(row, col) {
+                this.row = row;
+                this.col = col;
+                this.candidates = game.sudoku.getCandidates(row, col);
+                this.correctAnswer = game.sudoku.getCorrectAnswer(row, col);
+                
+                // Determine which numbers to spawn as asteroids
+                const userMarks = game.pencilMarks[row][col];
+                if (userMarks && userMarks.size > 0) {
+                    // User has pencil marks - spawn those numbers
+                    this.activeNumbers = Array.from(userMarks);
+                } else {
+                    // No pencil marks - spawn numbers that are ALREADY PLACED (definitely wrong)
+                    const placedNumbers = new Set();
+                    
+                    // Get numbers in same row
+                    for (let c = 0; c < 9; c++) {
+                        const val = game.sudoku.puzzle[row][c];
+                        if (val !== 0) placedNumbers.add(val);
+                    }
+                    
+                    // Get numbers in same column
+                    for (let r = 0; r < 9; r++) {
+                        const val = game.sudoku.puzzle[r][col];
+                        if (val !== 0) placedNumbers.add(val);
+                    }
+                    
+                    // Get numbers in same 3x3 box
+                    const boxRow = Math.floor(row / 3) * 3;
+                    const boxCol = Math.floor(col / 3) * 3;
+                    for (let r = boxRow; r < boxRow + 3; r++) {
+                        for (let c = boxCol; c < boxCol + 3; c++) {
+                            const val = game.sudoku.puzzle[r][c];
+                            if (val !== 0) placedNumbers.add(val);
+                        }
+                    }
+                    
+                    // If no placed numbers found, use valid candidates as fallback
+                    this.activeNumbers = placedNumbers.size > 0 ? 
+                                        Array.from(placedNumbers) : 
+                                        this.candidates;
+                }
+                
+                // Player ship (classic Asteroids style)
+                this.player = {
+                    x: canvas.width / 2,
+                    y: canvas.height / 2,
+                    angle: -Math.PI / 2,  // Pointing up
+                    vx: 0,
+                    vy: 0,
+                    thrust: 0.15,
+                    friction: 0.99,
+                    rotationSpeed: 0.08,
+                    size: 10
+                };
+                
+                // Game objects
+                this.asteroids = [];
+                this.bullets = [];
+                this.particles = [];
+                this.foundAnswer = null;
+                this.gameOver = false;
+                this.won = false;
+                this.message = '';
+                this.time = 0;
+                this.playerInvincible = false;
+                
+                // Survival goals - complete ONE to win
+                this.survivalTime = 30 * 60;  // 30 seconds at 60fps
+                this.survivalGoal = Math.max(10, this.activeNumbers.length * 3); // Or destroy X asteroids
+                this.destroyedCount = 0;
+                
+                // Controls
+                this.keys = {};
+                
+                // Spawn asteroids based on active numbers only
+                this.spawnAsteroids();
+                
+                this.setupControls();
+                this.gameLoop();
+            }
+            
+            spawnAsteroids() {
+                // Spawn asteroids ONLY for active numbers (candidates OR user's pencil marks)
+                this.activeNumbers.forEach(num => {
+                    const props = ASTEROID_PROPERTIES[num];
+                    
+                    // Spawn 1-2 asteroids per number
+                    const count = 1 + Math.floor(Math.random() * 2);
+                    
+                    for (let i = 0; i < count; i++) {
+                        // Spawn around edges, not on player
+                        const angle = Math.random() * Math.PI * 2;
+                        const distance = 180 + Math.random() * 150;
+                        
+                        this.asteroids.push({
+                            x: canvas.width / 2 + Math.cos(angle) * distance,
+                            y: canvas.height / 2 + Math.sin(angle) * distance,
+                            vx: (Math.random() - 0.5) * props.speed * 0.8,
+                            vy: (Math.random() - 0.5) * props.speed * 0.8,
+                            angle: Math.random() * Math.PI * 2,
+                            angularVel: (Math.random() - 0.5) * props.spin,
+                            size: props.size,
+                            number: num,
+                            health: props.health,
+                            maxHealth: props.health,
+                            breakInto: props.breakInto,
+                            color: props.color,
+                            isCorrect: num === this.correctAnswer,
+                            destroyed: false
+                        });
+                    }
+                });
+            }
+            
+            setupControls() {
+                this.keyDownHandler = (e) => {
+                    this.keys[e.key] = true;
+                    if (e.key === ' ') {
+                        e.preventDefault();
+                        this.shoot();
+                    }
+                };
+                
+                this.keyUpHandler = (e) => {
+                    this.keys[e.key] = false;
+                };
+                
+                window.addEventListener('keydown', this.keyDownHandler);
+                window.addEventListener('keyup', this.keyUpHandler);
+            }
+            
+            shoot() {
+                if (this.bullets.length < 4) {
+                    // Shoot from ship nose in direction of angle
+                    this.bullets.push({
+                        x: this.player.x + Math.cos(this.player.angle) * this.player.size,
+                        y: this.player.y + Math.sin(this.player.angle) * this.player.size,
+                        vx: Math.cos(this.player.angle) * 7,
+                        vy: Math.sin(this.player.angle) * 7,
+                        life: 60
+                    });
+                }
+            }
+            
+            update() {
+                if (this.gameOver) return;
+                
+                this.time++;
+                
+                // Player controls - Classic Asteroids style!
+                if (this.keys['ArrowLeft'] || this.keys['a']) {
+                    this.player.angle -= this.player.rotationSpeed;
+                }
+                if (this.keys['ArrowRight'] || this.keys['d']) {
+                    this.player.angle += this.player.rotationSpeed;
+                }
+                if (this.keys['ArrowUp'] || this.keys['w']) {
+                    // Thrust in direction of angle
+                    this.player.vx += Math.cos(this.player.angle) * this.player.thrust;
+                    this.player.vy += Math.sin(this.player.angle) * this.player.thrust;
+                }
+                
+                // Apply friction
+                this.player.vx *= this.player.friction;
+                this.player.vy *= this.player.friction;
+                
+                // Update player position
+                this.player.x += this.player.vx;
+                this.player.y += this.player.vy;
+                
+                // Wrap player around screen edges (classic Asteroids!)
+                if (this.player.x < 0) this.player.x = canvas.width;
+                if (this.player.x > canvas.width) this.player.x = 0;
+                if (this.player.y < 0) this.player.y = canvas.height;
+                if (this.player.y > canvas.height) this.player.y = 0;
+                
+                // Move and update asteroids
+                this.asteroids.forEach(asteroid => {
+                    if (asteroid.destroyed) return;
+                    
+                    // Move
+                    asteroid.x += asteroid.vx;
+                    asteroid.y += asteroid.vy;
+                    asteroid.angle += asteroid.angularVel;
+                    
+                    // Wrap around edges
+                    if (asteroid.x < -asteroid.size) asteroid.x = canvas.width + asteroid.size;
+                    if (asteroid.x > canvas.width + asteroid.size) asteroid.x = -asteroid.size;
+                    if (asteroid.y < -asteroid.size) asteroid.y = canvas.height + asteroid.size;
+                    if (asteroid.y > canvas.height + asteroid.size) asteroid.y = -asteroid.size;
+                    
+                    // Check collision with player (only if not invincible)
+                    if (!this.playerInvincible) {
+                        let dx = this.player.x - asteroid.x;
+                        let dy = this.player.y - asteroid.y;
+                        let distance = Math.sqrt(dx * dx + dy * dy);
+                        
+                        if (distance < asteroid.size + this.player.size) {
+                            this.gameOver = true;
+                            this.won = false;
+                            this.message = '💥 Hit by asteroid! Try again!';
+                        }
+                    }
+                });
+                
+                // Move and update bullets
+                this.bullets = this.bullets.filter(bullet => {
+                    bullet.x += bullet.vx;
+                    bullet.y += bullet.vy;
+                    bullet.life--;
+                    
+                    // Remove if life is over or off screen
+                    if (bullet.life <= 0) return false;
+                    if (bullet.x < 0 || bullet.x > canvas.width || bullet.y < 0 || bullet.y > canvas.height) return false;
+                    
+                    // Check collision with asteroids
+                    let hit = false;
+                    this.asteroids.forEach(asteroid => {
+                        if (asteroid.destroyed || hit) return;
+                        
+                        let dx = bullet.x - asteroid.x;
+                        let dy = bullet.y - asteroid.y;
+                        let distance = Math.sqrt(dx * dx + dy * dy);
+                        
+                        if (distance < asteroid.size + 3) {
+                            hit = true;
+                            asteroid.health--;
+                            
+                            // Create particles
+                            for (let i = 0; i < 5; i++) {
+                                this.particles.push({
+                                    x: asteroid.x,
+                                    y: asteroid.y,
+                                    vx: (Math.random() - 0.5) * 4,
+                                    vy: (Math.random() - 0.5) * 4,
+                                    life: 20,
+                                    color: asteroid.color
+                                });
+                            }
+                            
+                            if (asteroid.health <= 0) {
+                                asteroid.destroyed = true;
+                                this.destroyedCount++;
+                                
+                                // Break into smaller pieces
+                                if (asteroid.breakInto > 0 && asteroid.size > 12) {
+                                    for (let i = 0; i < asteroid.breakInto; i++) {
+                                        const angle = (Math.PI * 2 / asteroid.breakInto) * i;
+                                        this.asteroids.push({
+                                            x: asteroid.x,
+                                            y: asteroid.y,
+                                            vx: Math.cos(angle) * 2 + asteroid.vx * 0.5,
+                                            vy: Math.sin(angle) * 2 + asteroid.vy * 0.5,
+                                            angle: Math.random() * Math.PI * 2,
+                                            angularVel: (Math.random() - 0.5) * 0.1,
+                                            size: asteroid.size * 0.5,
+                                            number: asteroid.number,
+                                            health: 1,
+                                            maxHealth: 1,
+                                            breakInto: 0,
+                                            color: asteroid.color,
+                                            isCorrect: asteroid.isCorrect,
+                                            destroyed: false
+                                        });
+                                    }
+                                }
+                            }
+                        }
+                    });
+                    
+                    return !hit;
+                });
+                
+                // Update particles
+                this.particles = this.particles.filter(p => {
+                    p.x += p.vx;
+                    p.y += p.vy;
+                    p.life--;
+                    return p.life > 0;
+                });
+                
+                // Clean up destroyed asteroids
+                this.asteroids = this.asteroids.filter(a => !a.destroyed);
+                
+                // Check survival goals
+                if (!this.gameOver && !this.foundAnswer) {
+                    // Goal 1: Survive for time limit OR Goal 2: Destroy enough asteroids
+                    if (this.time >= this.survivalTime || this.destroyedCount >= this.survivalGoal) {
+                        // SURVIVED! Now reveal the answer
+                        this.foundAnswer = this.correctAnswer;
+                        this.playerInvincible = true;  // Can't die anymore!
+                        
+                        // Explode ALL asteroids EXCEPT the correct answer
+                        this.asteroids.forEach(a => {
+                            if (a.number !== this.correctAnswer) {
+                                a.destroyed = true;
+                                // Create big explosion particles
+                                for (let i = 0; i < 10; i++) {
+                                    this.particles.push({
+                                        x: a.x,
+                                        y: a.y,
+                                        vx: (Math.random() - 0.5) * 6,
+                                        vy: (Math.random() - 0.5) * 6,
+                                        life: 30,
+                                        color: a.color
+                                    });
+                                }
+                            } else {
+                                // Correct answer asteroids glow and stop moving
+                                a.revealed = true;
+                                a.vx *= 0.5;
+                                a.vy *= 0.5;
+                            }
+                        });
+                        
+                        // End game after showing the answer
+                        setTimeout(() => {
+                            this.gameOver = true;
+                            this.won = true;
+                            this.message = `✅ Survived! The answer is ${this.correctAnswer}!`;
+                        }, 1500);
+                    }
+                }
+            }
+            
+            draw() {
+                // Clear canvas - black space
+                ctx.fillStyle = '#000';
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+                
+                // Draw stars background (static)
+                ctx.fillStyle = '#fff';
+                for (let i = 0; i < 80; i++) {
+                    const x = (i * 37) % canvas.width;
+                    const y = (i * 73) % canvas.height;
+                    ctx.fillRect(x, y, 1, 1);
+                }
+                
+                // Draw particles
+                this.particles.forEach(p => {
+                    ctx.fillStyle = p.color;
+                    ctx.globalAlpha = p.life / 20;
+                    ctx.fillRect(p.x, p.y, 2, 2);
+                });
+                ctx.globalAlpha = 1;
+                
+                // Draw asteroids with unique properties
+                this.asteroids.forEach(asteroid => {
+                    ctx.save();
+                    ctx.translate(asteroid.x, asteroid.y);
+                    ctx.rotate(asteroid.angle);
+                    
+                    // Draw irregular polygon for asteroid
+                    ctx.beginPath();
+                    const sides = 8;
+                    for (let i = 0; i < sides; i++) {
+                        const angle = (Math.PI * 2 / sides) * i;
+                        const radius = asteroid.size * (0.8 + Math.sin(i * 3) * 0.2);
+                        const x = Math.cos(angle) * radius;
+                        const y = Math.sin(angle) * radius;
+                        if (i === 0) ctx.moveTo(x, y);
+                        else ctx.lineTo(x, y);
+                    }
+                    ctx.closePath();
+                    
+                    // Fill with number's color (or gold if revealed)
+                    if (asteroid.revealed) {
+                        ctx.fillStyle = '#FFD700';
+                        ctx.shadowBlur = 30;
+                        ctx.shadowColor = '#FFD700';
+                    } else {
+                        ctx.fillStyle = asteroid.color;
+                    }
+                    ctx.fill();
+                    ctx.shadowBlur = 0;
+                    
+                    ctx.strokeStyle = '#fff';
+                    ctx.lineWidth = 2;
+                    ctx.stroke();
+                    
+                    // Health indicator
+                    if (asteroid.health < asteroid.maxHealth && !asteroid.revealed) {
+                        ctx.fillStyle = 'rgba(255,255,255,0.5)';
+                        ctx.fillRect(-asteroid.size, -asteroid.size - 8, 
+                                    (asteroid.size * 2) * (asteroid.health / asteroid.maxHealth), 3);
+                    }
+                    
+                    // Draw number
+                    ctx.fillStyle = asteroid.revealed ? '#000' : '#fff';
+                    ctx.font = `bold ${Math.floor(asteroid.size * 0.8)}px Arial`;
+                    ctx.textAlign = 'center';
+                    ctx.textBaseline = 'middle';
+                    ctx.fillText(asteroid.number, 0, 0);
+                    
+                    ctx.restore();
+                });
+                
+                // Draw bullets
+                ctx.fillStyle = '#fff';
+                this.bullets.forEach(bullet => {
+                    ctx.beginPath();
+                    ctx.arc(bullet.x, bullet.y, 2, 0, Math.PI * 2);
+                    ctx.fill();
+                });
+                
+                // Draw player ship (classic triangle)
+                ctx.save();
+                ctx.translate(this.player.x, this.player.y);
+                ctx.rotate(this.player.angle);
+                
+                ctx.strokeStyle = '#fff';
+                ctx.lineWidth = 2;
+                ctx.beginPath();
+                ctx.moveTo(this.player.size, 0);
+                ctx.lineTo(-this.player.size, -this.player.size * 0.7);
+                ctx.lineTo(-this.player.size * 0.5, 0);
+                ctx.lineTo(-this.player.size, this.player.size * 0.7);
+                ctx.closePath();
+                ctx.stroke();
+                
+                // Thrust flame
+                if (this.keys['ArrowUp'] || this.keys['w']) {
+                    ctx.fillStyle = this.time % 4 < 2 ? '#FFA500' : '#FF4500';
+                    ctx.beginPath();
+                    ctx.moveTo(-this.player.size * 0.5, -this.player.size * 0.3);
+                    ctx.lineTo(-this.player.size * 1.5, 0);
+                    ctx.lineTo(-this.player.size * 0.5, this.player.size * 0.3);
+                    ctx.closePath();
+                    ctx.fill();
+                }
+                
+                ctx.restore();
+                
+                // Draw UI
+                ctx.fillStyle = '#fff';
+                ctx.font = '12px "Courier New"';
+                ctx.textAlign = 'left';
+                
+                // Time and goals
+                const timeLeft = Math.max(0, Math.ceil((this.survivalTime - this.time) / 60));
+                const destroyProgress = `${this.destroyedCount}/${this.survivalGoal}`;
+                ctx.fillText(`TIME: ${timeLeft}s`, 10, 20);
+                ctx.fillText(`DESTROYED: ${destroyProgress}`, 10, 35);
+                ctx.fillText(`ASTEROIDS: ${this.asteroids.length}`, 10, 50);
+                
+                if (this.foundAnswer) {
+                    ctx.fillStyle = '#0F0';
+                    ctx.font = 'bold 16px "Courier New"';
+                    ctx.fillText(`ANSWER: ${this.foundAnswer}`, 10, 70);
+                    ctx.font = '12px "Courier New"';
+                    ctx.fillText(`(INVINCIBLE)`, 10, 85);
+                }
+                
+                // Draw game over message
+                if (this.gameOver) {
+                    ctx.fillStyle = 'rgba(0, 0, 0, 0.8)';
+                    ctx.fillRect(0, canvas.height / 2 - 60, canvas.width, 120);
+                    
+                    ctx.fillStyle = this.won ? '#0F0' : '#F00';
+                    ctx.font = 'bold 24px "Courier New"';
+                    ctx.textAlign = 'center';
+                    ctx.fillText(this.message, canvas.width / 2, canvas.height / 2 - 10);
+                    
+                    ctx.fillStyle = '#fff';
+                    ctx.font = '14px "Courier New"';
+                    ctx.fillText('Returning to board...', canvas.width / 2, canvas.height / 2 + 20);
+                }
+            }
+            
+            gameLoop() {
+                this.update();
+                this.draw();
+                
+                if (!this.gameOver) {
+                    requestAnimationFrame(() => this.gameLoop());
+                } else {
+                    setTimeout(() => this.cleanup(), 2000);
+                }
+            }
+            
+            cleanup() {
+                window.removeEventListener('keydown', this.keyDownHandler);
+                window.removeEventListener('keyup', this.keyUpHandler);
+                endChallenge(this.won, this.row, this.col, this.foundAnswer);
+            }
+        }
+
+        function endChallenge(won, row, col, foundAnswer) {
+            canvas.style.display = 'none';
+            sudokuView.style.display = 'block';
+            gameType.classList.add('hidden');
+            game.currentCell = null;
+            
+            if (won && foundAnswer) {
+                game.userEntries[row][col] = foundAnswer;
+                game.pencilMarks[row][col].clear();
+                message.textContent = `🎉 Cell solved via mini-game! The answer is ${foundAnswer}.`;
+                selectedCell = null; // Deselect after solving
+            } else {
+                message.textContent = '💥 Challenge failed! Try again or solve normally.';
+                // Keep cell selected so player can try again
+                selectedCell = { row, col };
+            }
+            
+            renderSudoku();
+        }
+
+        // Initialize game
+        renderSudoku();
+    </script>
+</body>
+</html>

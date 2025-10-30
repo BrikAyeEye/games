@@ -1,0 +1,710 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sudoku Tower - 3D Puzzle</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            color: #fff;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            width: 100%;
+        }
+
+        h1 {
+            text-align: center;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .subtitle {
+            text-align: center;
+            margin-bottom: 20px;
+            opacity: 0.9;
+            font-size: 14px;
+        }
+
+        .controls {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+
+        button {
+            background: #4CAF50;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.3s;
+        }
+
+        button:hover {
+            background: #45a049;
+            transform: translateY(-2px);
+        }
+
+        button.active {
+            background: #FF9800;
+        }
+
+        .tower-container {
+            display: flex;
+            gap: 20px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .floor {
+            background: rgba(255,255,255,0.1);
+            padding: 15px;
+            border-radius: 10px;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+            transition: all 0.3s;
+        }
+
+        .floor-label {
+            text-align: center;
+            font-weight: bold;
+            margin-bottom: 10px;
+            font-size: 16px;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.5);
+        }
+
+        .floor.floor-0 { border: 3px solid #FF6B6B; }
+        .floor.floor-1 { border: 3px solid #4ECDC4; }
+        .floor.floor-2 { border: 3px solid #FFD93D; }
+
+        .sudoku-grid {
+            display: grid;
+            grid-template-columns: repeat(9, 1fr);
+            gap: 1px;
+            background: #333;
+            padding: 2px;
+        }
+
+        .cell {
+            width: 40px;
+            height: 40px;
+            background: white;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 18px;
+            font-weight: bold;
+            color: #000;
+            cursor: pointer;
+            transition: all 0.2s;
+            position: relative;
+        }
+
+        .cell.given {
+            background: #e0e0e0;
+            color: #000;
+            cursor: default;
+        }
+
+        .cell.auto-filled {
+            background: #C8E6C9;
+            color: #2E7D32;
+        }
+
+        .cell:hover:not(.given) {
+            background: #bbdefb;
+            transform: scale(1.05);
+        }
+
+        .cell.selected {
+            background: #FFC107;
+            outline: 3px solid #FF5722;
+            outline-offset: -3px;
+        }
+
+        .cell.vertical-highlight {
+            box-shadow: inset 0 0 8px rgba(33, 150, 243, 0.5);
+        }
+
+        .cell .main-number {
+            font-size: 20px;
+            font-weight: bold;
+        }
+
+        .cell .options {
+            position: absolute;
+            top: 2px;
+            left: 2px;
+            right: 2px;
+            font-size: 10px;
+            color: #2196F3;
+            font-weight: normal;
+            line-height: 1.2;
+        }
+
+        .cell .option-count {
+            font-size: 12px;
+            color: #666;
+            font-weight: normal;
+        }
+
+        /* 3x3 box borders */
+        .cell:nth-child(3n):not(:nth-child(9n)) {
+            border-right: 2px solid #333;
+        }
+        .cell:nth-child(n+19):nth-child(-n+27),
+        .cell:nth-child(n+46):nth-child(-n+54) {
+            border-bottom: 2px solid #333;
+        }
+
+        .stats {
+            display: flex;
+            justify-content: center;
+            gap: 30px;
+            margin-top: 20px;
+            background: rgba(255,255,255,0.1);
+            padding: 15px;
+            border-radius: 10px;
+            backdrop-filter: blur(10px);
+        }
+
+        .stat {
+            text-align: center;
+        }
+
+        .stat-label {
+            font-size: 12px;
+            opacity: 0.8;
+        }
+
+        .stat-value {
+            font-size: 24px;
+            font-weight: bold;
+            margin-top: 5px;
+        }
+
+        .instructions {
+            background: rgba(255,255,255,0.1);
+            padding: 15px;
+            border-radius: 10px;
+            margin-top: 20px;
+            backdrop-filter: blur(10px);
+            font-size: 13px;
+            line-height: 1.6;
+        }
+
+        .message {
+            text-align: center;
+            margin-bottom: 15px;
+            font-size: 16px;
+            min-height: 24px;
+            font-weight: bold;
+        }
+
+        @media (max-width: 1200px) {
+            .tower-container {
+                flex-direction: column;
+                align-items: center;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🏢 Sudoku Tower</h1>
+        <p class="subtitle">3-Floor Vertical Challenge with Smart Auto-Fill</p>
+
+        <div class="message" id="message">Click a cell to select</div>
+
+        <div class="controls">
+            <button onclick="newPuzzle()">🎲 New Puzzle</button>
+            <button onclick="toggleAutoFill()" id="autoFillBtn" class="active">✨ Smart Fill: ON</button>
+            <button onclick="checkSolution()">✓ Check Solution</button>
+            <button onclick="showHint()">💡 Hint</button>
+        </div>
+
+        <div class="tower-container" id="towerContainer"></div>
+
+        <div class="stats">
+            <div class="stat">
+                <div class="stat-label">Cells Filled</div>
+                <div class="stat-value" id="cellsFilled">0/243</div>
+            </div>
+            <div class="stat">
+                <div class="stat-label">Auto-Filled</div>
+                <div class="stat-value" id="autoFilledCount">0</div>
+            </div>
+            <div class="stat">
+                <div class="stat-label">Selected Floor</div>
+                <div class="stat-value" id="currentFloor">-</div>
+            </div>
+        </div>
+
+        <div class="instructions">
+            <strong>🎯 How 3D Sudoku Tower Works:</strong><br>
+            • <strong>3 Floors</strong> of 9×9 Sudoku stacked vertically<br>
+            • Standard Sudoku rules apply per floor (row, column, 3×3 box)<br>
+            • <strong>NEW: Vertical constraint</strong> - Same cell position across all floors must be unique (1-9 used only once)<br>
+            <br>
+            <strong>✨ Smart Auto-Fill:</strong><br>
+            • <strong>1 option remaining:</strong> Auto-fills immediately ✓<br>
+            • <strong>2-3 options:</strong> Shows small blue numbers (e.g., "27")<br>
+            • <strong>4+ options:</strong> Shows count (e.g., "⁴")<br>
+            <br>
+            <strong>🎮 Controls:</strong><br>
+            • Click cell → Type 1-9 to fill | Delete to clear<br>
+            • Click same position on different floors to see vertical constraint<br>
+            • Arrow keys to navigate within a floor
+        </div>
+    </div>
+
+    <script>
+        // Tower game state
+        const tower = {
+            floors: 3,
+            grids: [], // 3 floors of 9x9 grids
+            solutions: [], // Correct solutions
+            userEntries: [], // User's answers
+            autoFillEnabled: true,
+            selectedCell: null,
+            autoFilledCells: new Set()
+        };
+
+        // Initialize tower
+        function initTower() {
+            tower.grids = [];
+            tower.solutions = [];
+            tower.userEntries = [];
+            tower.autoFilledCells.clear();
+
+            for (let floor = 0; floor < tower.floors; floor++) {
+                tower.grids[floor] = createEmptyGrid();
+                tower.solutions[floor] = createEmptyGrid();
+                tower.userEntries[floor] = createEmptyGrid();
+            }
+        }
+
+        function createEmptyGrid() {
+            return Array(9).fill(null).map(() => Array(9).fill(0));
+        }
+
+        // Generate a simple 3-floor puzzle
+        function generateTowerPuzzle() {
+            initTower();
+
+            // For now, create 3 valid but independent Sudokus
+            // Then apply vertical constraint manually
+            
+            // Floor 0 - Simple puzzle
+            tower.grids[0] = [
+                [5,3,0, 0,7,0, 0,0,0],
+                [6,0,0, 1,9,5, 0,0,0],
+                [0,9,8, 0,0,0, 0,6,0],
+                
+                [8,0,0, 0,6,0, 0,0,3],
+                [4,0,0, 8,0,3, 0,0,1],
+                [7,0,0, 0,2,0, 0,0,6],
+                
+                [0,6,0, 0,0,0, 2,8,0],
+                [0,0,0, 4,1,9, 0,0,5],
+                [0,0,0, 0,8,0, 0,7,9]
+            ];
+            
+            tower.solutions[0] = [
+                [5,3,4, 6,7,8, 9,1,2],
+                [6,7,2, 1,9,5, 3,4,8],
+                [1,9,8, 3,4,2, 5,6,7],
+                
+                [8,5,9, 7,6,1, 4,2,3],
+                [4,2,6, 8,5,3, 7,9,1],
+                [7,1,3, 9,2,4, 8,5,6],
+                
+                [9,6,1, 5,3,7, 2,8,4],
+                [2,8,7, 4,1,9, 6,3,5],
+                [3,4,5, 2,8,6, 1,7,9]
+            ];
+
+            // Floor 1 - Different starting numbers
+            tower.grids[1] = [
+                [0,0,3, 0,2,0, 6,0,0],
+                [9,0,0, 3,0,5, 0,0,1],
+                [0,0,1, 8,0,6, 4,0,0],
+                
+                [0,0,8, 1,0,2, 9,0,0],
+                [7,0,0, 0,0,0, 0,0,8],
+                [0,0,6, 7,0,8, 2,0,0],
+                
+                [0,0,2, 6,0,9, 5,0,0],
+                [8,0,0, 2,0,3, 0,0,9],
+                [0,0,5, 0,1,0, 3,0,0]
+            ];
+            
+            tower.solutions[1] = [
+                [4,8,3, 9,2,1, 6,5,7],
+                [9,6,7, 3,4,5, 8,2,1],
+                [2,5,1, 8,7,6, 4,9,3],
+                
+                [5,4,8, 1,3,2, 9,7,6],
+                [7,2,9, 5,6,4, 1,3,8],
+                [1,3,6, 7,9,8, 2,4,5],
+                
+                [3,7,2, 6,8,9, 5,1,4],
+                [8,1,4, 2,5,3, 7,6,9],
+                [6,9,5, 4,1,7, 3,8,2]
+            ];
+
+            // Floor 2 - Another pattern
+            tower.grids[2] = [
+                [0,0,0, 2,6,0, 7,0,1],
+                [6,8,0, 0,7,0, 0,9,0],
+                [1,9,0, 0,0,4, 5,0,0],
+                
+                [8,2,0, 1,0,0, 0,4,0],
+                [0,0,4, 6,0,2, 9,0,0],
+                [0,5,0, 0,0,3, 0,2,8],
+                
+                [0,0,9, 3,0,0, 0,7,4],
+                [0,4,0, 0,5,0, 0,3,6],
+                [7,0,3, 0,1,8, 0,0,0]
+            ];
+            
+            tower.solutions[2] = [
+                [4,3,5, 2,6,9, 7,8,1],
+                [6,8,2, 5,7,1, 4,9,3],
+                [1,9,7, 8,3,4, 5,6,2],
+                
+                [8,2,6, 1,9,5, 3,4,7],
+                [3,7,4, 6,8,2, 9,1,5],
+                [9,5,1, 7,4,3, 6,2,8],
+                
+                [5,1,9, 3,2,6, 8,7,4],
+                [2,4,8, 9,5,7, 1,3,6],
+                [7,6,3, 4,1,8, 2,5,9]
+            ];
+
+            renderTower();
+            applySmartFill();
+            updateStats();
+        }
+
+        function renderTower() {
+            const container = document.getElementById('towerContainer');
+            container.innerHTML = '';
+
+            for (let floor = 0; floor < tower.floors; floor++) {
+                const floorDiv = document.createElement('div');
+                floorDiv.className = `floor floor-${floor}`;
+                
+                const label = document.createElement('div');
+                label.className = 'floor-label';
+                label.textContent = `Floor ${floor + 1}`;
+                floorDiv.appendChild(label);
+
+                const grid = document.createElement('div');
+                grid.className = 'sudoku-grid';
+                
+                for (let row = 0; row < 9; row++) {
+                    for (let col = 0; col < 9; col++) {
+                        const cell = document.createElement('div');
+                        cell.className = 'cell';
+                        cell.dataset.floor = floor;
+                        cell.dataset.row = row;
+                        cell.dataset.col = col;
+
+                        const givenValue = tower.grids[floor][row][col];
+                        const userValue = tower.userEntries[floor][row][col];
+                        const cellKey = `${floor}-${row}-${col}`;
+
+                        if (givenValue !== 0) {
+                            // Given number
+                            cell.innerHTML = `<span class="main-number">${givenValue}</span>`;
+                            cell.classList.add('given');
+                        } else if (userValue !== 0) {
+                            // User entered or auto-filled
+                            cell.innerHTML = `<span class="main-number">${userValue}</span>`;
+                            if (tower.autoFilledCells.has(cellKey)) {
+                                cell.classList.add('auto-filled');
+                            }
+                        } else {
+                            // Empty - show options
+                            const options = getOptions(floor, row, col);
+                            if (options.length === 2 || options.length === 3) {
+                                cell.innerHTML = `<span class="options">${options.join('')}</span>`;
+                            } else if (options.length > 3) {
+                                const superscripts = ['⁰','¹','²','³','⁴','⁵','⁶','⁷','⁸','⁹'];
+                                cell.innerHTML = `<span class="option-count">${superscripts[options.length]}</span>`;
+                            }
+                        }
+
+                        // Check if selected
+                        if (tower.selectedCell && 
+                            tower.selectedCell.floor === floor && 
+                            tower.selectedCell.row === row && 
+                            tower.selectedCell.col === col) {
+                            cell.classList.add('selected');
+                        }
+
+                        // Highlight vertical connections
+                        if (tower.selectedCell && 
+                            tower.selectedCell.row === row && 
+                            tower.selectedCell.col === col) {
+                            cell.classList.add('vertical-highlight');
+                        }
+
+                        cell.onclick = () => selectCell(floor, row, col);
+                        grid.appendChild(cell);
+                    }
+                }
+
+                floorDiv.appendChild(grid);
+                container.appendChild(floorDiv);
+            }
+        }
+
+        function selectCell(floor, row, col) {
+            // Don't select given cells
+            if (tower.grids[floor][row][col] !== 0) return;
+
+            tower.selectedCell = { floor, row, col };
+            renderTower();
+            updateStats();
+            
+            document.getElementById('message').textContent = 
+                `Floor ${floor + 1}, Cell (${row + 1}, ${col + 1}) - ${getOptions(floor, row, col).length} options`;
+        }
+
+        // Get valid options for a cell considering ALL constraints
+        function getOptions(floor, row, col) {
+            const options = new Set([1,2,3,4,5,6,7,8,9]);
+
+            // Remove numbers in same row
+            for (let c = 0; c < 9; c++) {
+                const val = tower.grids[floor][row][c] || tower.userEntries[floor][row][c];
+                if (val) options.delete(val);
+            }
+
+            // Remove numbers in same column
+            for (let r = 0; r < 9; r++) {
+                const val = tower.grids[floor][r][col] || tower.userEntries[floor][r][col];
+                if (val) options.delete(val);
+            }
+
+            // Remove numbers in same 3x3 box
+            const boxRow = Math.floor(row / 3) * 3;
+            const boxCol = Math.floor(col / 3) * 3;
+            for (let r = boxRow; r < boxRow + 3; r++) {
+                for (let c = boxCol; c < boxCol + 3; c++) {
+                    const val = tower.grids[floor][r][c] || tower.userEntries[floor][r][c];
+                    if (val) options.delete(val);
+                }
+            }
+
+            // VERTICAL CONSTRAINT - Remove numbers in same position on other floors
+            for (let f = 0; f < tower.floors; f++) {
+                if (f !== floor) {
+                    const val = tower.grids[f][row][col] || tower.userEntries[f][row][col];
+                    if (val) options.delete(val);
+                }
+            }
+
+            return Array.from(options).sort();
+        }
+
+        // Smart auto-fill system
+        function applySmartFill() {
+            if (!tower.autoFillEnabled) return;
+
+            let filled = false;
+            do {
+                filled = false;
+                for (let floor = 0; floor < tower.floors; floor++) {
+                    for (let row = 0; row < 9; row++) {
+                        for (let col = 0; col < 9; col++) {
+                            if (tower.grids[floor][row][col] === 0 && 
+                                tower.userEntries[floor][row][col] === 0) {
+                                const options = getOptions(floor, row, col);
+                                if (options.length === 1) {
+                                    // Auto-fill!
+                                    tower.userEntries[floor][row][col] = options[0];
+                                    tower.autoFilledCells.add(`${floor}-${row}-${col}`);
+                                    filled = true;
+                                }
+                            }
+                        }
+                    }
+                }
+            } while (filled); // Keep filling until no more singles
+
+            renderTower();
+            updateStats();
+        }
+
+        // Keyboard input
+        window.addEventListener('keydown', (e) => {
+            if (!tower.selectedCell) return;
+
+            const { floor, row, col } = tower.selectedCell;
+            
+            // Number keys
+            const digitMatch = e.code.match(/^Digit(\d)$/);
+            if (digitMatch) {
+                const num = parseInt(digitMatch[1]);
+                if (num >= 1 && num <= 9) {
+                    const options = getOptions(floor, row, col);
+                    if (options.includes(num)) {
+                        tower.userEntries[floor][row][col] = num;
+                        document.getElementById('message').textContent = `Entered ${num}`;
+                        renderTower();
+                        applySmartFill();
+                        updateStats();
+                    } else {
+                        document.getElementById('message').textContent = `❌ ${num} is not valid here!`;
+                    }
+                }
+            }
+
+            // Delete
+            if (e.key === 'Delete' || e.key === 'Backspace') {
+                const cellKey = `${floor}-${row}-${col}`;
+                tower.userEntries[floor][row][col] = 0;
+                tower.autoFilledCells.delete(cellKey);
+                document.getElementById('message').textContent = 'Cell cleared';
+                renderTower();
+                applySmartFill();
+                updateStats();
+            }
+
+            // Arrow keys - navigate within floor
+            if (e.key.startsWith('Arrow')) {
+                e.preventDefault();
+                let newRow = row, newCol = col;
+                if (e.key === 'ArrowUp') newRow = Math.max(0, row - 1);
+                if (e.key === 'ArrowDown') newRow = Math.min(8, row + 1);
+                if (e.key === 'ArrowLeft') newCol = Math.max(0, col - 1);
+                if (e.key === 'ArrowRight') newCol = Math.min(8, col + 1);
+                selectCell(floor, newRow, newCol);
+            }
+
+            // Page Up/Down - move between floors
+            if (e.key === 'PageUp') {
+                e.preventDefault();
+                const newFloor = Math.max(0, floor - 1);
+                selectCell(newFloor, row, col);
+            }
+            if (e.key === 'PageDown') {
+                e.preventDefault();
+                const newFloor = Math.min(tower.floors - 1, floor + 1);
+                selectCell(newFloor, row, col);
+            }
+        });
+
+        function updateStats() {
+            let totalFilled = 0;
+            let totalCells = tower.floors * 81;
+            
+            for (let floor = 0; floor < tower.floors; floor++) {
+                for (let row = 0; row < 9; row++) {
+                    for (let col = 0; col < 9; col++) {
+                        if (tower.grids[floor][row][col] !== 0 || 
+                            tower.userEntries[floor][row][col] !== 0) {
+                            totalFilled++;
+                        }
+                    }
+                }
+            }
+
+            document.getElementById('cellsFilled').textContent = `${totalFilled}/${totalCells}`;
+            document.getElementById('autoFilledCount').textContent = tower.autoFilledCells.size;
+            document.getElementById('currentFloor').textContent = 
+                tower.selectedCell ? `Floor ${tower.selectedCell.floor + 1}` : '-';
+        }
+
+        function toggleAutoFill() {
+            tower.autoFillEnabled = !tower.autoFillEnabled;
+            const btn = document.getElementById('autoFillBtn');
+            btn.textContent = tower.autoFillEnabled ? '✨ Smart Fill: ON' : '✨ Smart Fill: OFF';
+            btn.classList.toggle('active');
+            
+            if (tower.autoFillEnabled) {
+                applySmartFill();
+            } else {
+                renderTower();
+            }
+        }
+
+        function checkSolution() {
+            let correct = true;
+            let errors = 0;
+
+            for (let floor = 0; floor < tower.floors; floor++) {
+                for (let row = 0; row < 9; row++) {
+                    for (let col = 0; col < 9; col++) {
+                        const userVal = tower.userEntries[floor][row][col];
+                        const correctVal = tower.solutions[floor][row][col];
+                        
+                        if (userVal !== 0 && userVal !== correctVal) {
+                            correct = false;
+                            errors++;
+                        }
+                    }
+                }
+            }
+
+            if (errors === 0) {
+                const totalFilled = tower.autoFilledCells.size + 
+                    Object.keys(tower.userEntries.flat(2).filter(v => v !== 0)).length;
+                if (totalFilled === tower.floors * 81) {
+                    document.getElementById('message').textContent = '🏆 PERFECT! Tower Complete!';
+                } else {
+                    document.getElementById('message').textContent = '✓ All entries correct so far!';
+                }
+            } else {
+                document.getElementById('message').textContent = `❌ ${errors} error(s) found!`;
+            }
+        }
+
+        function showHint() {
+            if (!tower.selectedCell) {
+                document.getElementById('message').textContent = '⚠️ Select a cell first!';
+                return;
+            }
+
+            const { floor, row, col } = tower.selectedCell;
+            if (tower.grids[floor][row][col] !== 0) {
+                document.getElementById('message').textContent = '⚠️ This is a given cell!';
+                return;
+            }
+
+            const correctAnswer = tower.solutions[floor][row][col];
+            document.getElementById('message').textContent = `💡 Hint: The answer is ${correctAnswer}`;
+        }
+
+        function newPuzzle() {
+            generateTowerPuzzle();
+            document.getElementById('message').textContent = 'New puzzle generated!';
+        }
+
+        // Initialize on load
+        generateTowerPuzzle();
+    </script>
+</body>
+</html>

@@ -1,0 +1,774 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sudoku Triangular Prism</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            color: #fff;
+            padding: 20px;
+            overflow-x: auto;
+        }
+
+        .container {
+            max-width: 1600px;
+            width: 100%;
+        }
+
+        h1 {
+            text-align: center;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .subtitle {
+            text-align: center;
+            margin-bottom: 20px;
+            opacity: 0.9;
+            font-size: 14px;
+        }
+
+        .controls {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+
+        button {
+            background: #4CAF50;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.3s;
+        }
+
+        button:hover {
+            background: #45a049;
+            transform: translateY(-2px);
+        }
+
+        button.active {
+            background: #FF9800;
+        }
+
+        .prism-container {
+            display: flex;
+            gap: 0;
+            justify-content: center;
+            margin: 20px auto;
+            width: fit-content;
+        }
+
+        .face {
+            position: relative;
+        }
+
+        .face-label {
+            text-align: center;
+            font-weight: bold;
+            margin-bottom: 10px;
+            font-size: 18px;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.5);
+        }
+
+        .face-1 { color: #FF6B6B; }
+        .face-2 { color: #4ECDC4; }
+        .face-3 { color: #FFD93D; }
+
+        .sudoku-grid {
+            display: grid;
+            grid-template-columns: repeat(9, 1fr);
+            gap: 1px;
+            background: #333;
+            padding: 2px;
+        }
+
+        .cell {
+            width: 45px;
+            height: 45px;
+            background: white;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 20px;
+            font-weight: bold;
+            color: #000;
+            cursor: pointer;
+            transition: all 0.2s;
+            position: relative;
+        }
+
+        .cell.given {
+            background: #e0e0e0;
+            color: #000;
+            cursor: default;
+        }
+
+        .cell.auto-filled {
+            background: #C8E6C9;
+            color: #2E7D32;
+        }
+
+        .cell.shared {
+            background: #FFF9C4;
+            border: 2px solid #FBC02D;
+        }
+
+        .cell.shared.given {
+            background: #F0E68C;
+        }
+
+        .cell.shared.auto-filled {
+            background: #AED581;
+        }
+
+        .cell:hover:not(.given) {
+            background: #bbdefb;
+            transform: scale(1.05);
+        }
+
+        .cell.selected {
+            background: #FF9800 !important;
+            outline: 3px solid #E65100;
+            outline-offset: -3px;
+            z-index: 10;
+        }
+
+        .cell .main-number {
+            font-size: 22px;
+            font-weight: bold;
+        }
+
+        .cell .options {
+            position: absolute;
+            top: 2px;
+            left: 2px;
+            right: 2px;
+            font-size: 11px;
+            color: #2196F3;
+            font-weight: normal;
+            line-height: 1.2;
+        }
+
+        .cell .option-count {
+            font-size: 14px;
+            color: #666;
+            font-weight: normal;
+        }
+
+        /* 3x3 box borders */
+        .cell:nth-child(3n):not(:nth-child(9n)) {
+            border-right: 2px solid #333;
+        }
+        .cell:nth-child(n+19):nth-child(-n+27),
+        .cell:nth-child(n+46):nth-child(-n+54) {
+            border-bottom: 2px solid #333;
+        }
+
+        .stats {
+            display: flex;
+            justify-content: center;
+            gap: 30px;
+            margin-top: 20px;
+            background: rgba(255,255,255,0.1);
+            padding: 15px;
+            border-radius: 10px;
+            backdrop-filter: blur(10px);
+            flex-wrap: wrap;
+        }
+
+        .stat {
+            text-align: center;
+        }
+
+        .stat-label {
+            font-size: 12px;
+            opacity: 0.8;
+        }
+
+        .stat-value {
+            font-size: 24px;
+            font-weight: bold;
+            margin-top: 5px;
+        }
+
+        .instructions {
+            background: rgba(255,255,255,0.1);
+            padding: 15px;
+            border-radius: 10px;
+            margin-top: 20px;
+            backdrop-filter: blur(10px);
+            font-size: 13px;
+            line-height: 1.6;
+        }
+
+        .message {
+            text-align: center;
+            margin-bottom: 15px;
+            font-size: 16px;
+            min-height: 24px;
+            font-weight: bold;
+        }
+
+        .prism-diagram {
+            text-align: center;
+            margin: 15px 0;
+            font-family: monospace;
+            background: rgba(0,0,0,0.3);
+            padding: 15px;
+            border-radius: 8px;
+            font-size: 12px;
+            line-height: 1.4;
+        }
+
+        @media (max-width: 1400px) {
+            .cell {
+                width: 38px;
+                height: 38px;
+                font-size: 18px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔺 Sudoku Triangular Prism</h1>
+        <p class="subtitle">3 Faces with Shared Edges - True 3D Topology</p>
+
+        <div class="message" id="message">Click a cell to select</div>
+
+        <div class="controls">
+            <button onclick="newPuzzle()">🎲 New Puzzle</button>
+            <button onclick="toggleAutoFill()" id="autoFillBtn" class="active">✨ Smart Fill: ON</button>
+            <button onclick="checkSolution()">✓ Check Solution</button>
+            <button onclick="showHint()">💡 Hint</button>
+        </div>
+
+        <div class="prism-diagram">
+            <strong>TRIANGULAR PRISM (Unfolded):</strong><br>
+            <span class="face-1">■ Face 1</span> | <span class="face-2">■ Face 2</span> | <span class="face-3">■ Face 3</span><br>
+            Face 1 RIGHT = Face 2 LEFT (shared 9 cells)<br>
+            Face 2 RIGHT = Face 3 LEFT (shared 9 cells)<br>
+            Face 3 RIGHT = Face 1 LEFT (wraps around!)<br>
+            <span style="color: #FDD835;">⚠ Yellow cells = SHARED between faces</span>
+        </div>
+
+        <div class="prism-container" id="prismContainer"></div>
+
+        <div class="stats">
+            <div class="stat">
+                <div class="stat-label">Total Cells</div>
+                <div class="stat-value">216</div>
+            </div>
+            <div class="stat">
+                <div class="stat-label">Filled</div>
+                <div class="stat-value" id="cellsFilled">0</div>
+            </div>
+            <div class="stat">
+                <div class="stat-label">Auto-Filled</div>
+                <div class="stat-value" id="autoFilledCount">0</div>
+            </div>
+            <div class="stat">
+                <div class="stat-label">Shared Cells</div>
+                <div class="stat-value">27</div>
+            </div>
+        </div>
+
+        <div class="instructions">
+            <strong>🔺 Triangular Prism Structure:</strong><br>
+            • <strong>3 rectangular faces</strong>, each is a 9×9 Sudoku<br>
+            • <strong>Shared columns</strong>: Each face shares its right column with the next face's left column<br>
+            • <strong>216 unique cells</strong> (27 cells shared between faces)<br>
+            • <strong>Wraps around</strong>: Face 3's right edge connects back to Face 1's left edge<br>
+            <br>
+            <strong>✨ Smart Auto-Fill:</strong><br>
+            • <strong>1 option:</strong> Auto-fills immediately (green)<br>
+            • <strong>2-3 options:</strong> Shows small numbers "27" or "245"<br>
+            • <strong>4+ options:</strong> Shows count "⁴"<br>
+            <br>
+            <strong>🎮 Controls:</strong><br>
+            • Click cell → Type 1-9 | Delete to clear<br>
+            • Arrow keys to navigate<br>
+            • <span style="color: #FDD835;">Yellow cells</span> affect multiple faces!
+        </div>
+    </div>
+
+    <script>
+        // Prism game state
+        const prism = {
+            faces: 3,
+            grids: [], // 3 faces, each 9×9
+            solutions: [],
+            userEntries: [],
+            autoFillEnabled: true,
+            selectedCell: null,
+            autoFilledCells: new Set()
+        };
+
+        // Initialize prism
+        function initPrism() {
+            prism.grids = [];
+            prism.solutions = [];
+            prism.userEntries = [];
+            prism.autoFilledCells.clear();
+
+            for (let face = 0; face < prism.faces; face++) {
+                prism.grids[face] = createEmptyGrid();
+                prism.solutions[face] = createEmptyGrid();
+                prism.userEntries[face] = createEmptyGrid();
+            }
+        }
+
+        function createEmptyGrid() {
+            return Array(9).fill(null).map(() => Array(9).fill(0));
+        }
+
+        // Check if a cell is on a shared edge
+        function isSharedCell(face, col) {
+            // Right edge of each face (col 8) is shared with next face's left edge (col 0)
+            return col === 0 || col === 8;
+        }
+
+        // Get the linked cell on another face (for shared edges)
+        function getLinkedCell(face, row, col) {
+            if (col === 8) {
+                // Right edge links to next face's left edge
+                const nextFace = (face + 1) % prism.faces;
+                return { face: nextFace, row, col: 0 };
+            } else if (col === 0) {
+                // Left edge links to previous face's right edge
+                const prevFace = (face - 1 + prism.faces) % prism.faces;
+                return { face: prevFace, row, col: 8 };
+            }
+            return null;
+        }
+
+        // Get value from a cell (checking both grids and user entries)
+        function getCellValue(face, row, col) {
+            return prism.grids[face][row][col] || prism.userEntries[face][row][col];
+        }
+
+        // Set value in a cell (handles shared edges)
+        function setCellValue(face, row, col, value) {
+            prism.userEntries[face][row][col] = value;
+            
+            // If it's a shared cell, update the linked cell too
+            const linked = getLinkedCell(face, row, col);
+            if (linked) {
+                prism.userEntries[linked.face][linked.row][linked.col] = value;
+            }
+        }
+
+        // Generate puzzle
+        function generatePrismPuzzle() {
+            initPrism();
+
+            // For prototype: Create 3 separate Sudokus
+            // Face 1
+            prism.grids[0] = [
+                [5,3,0, 0,7,0, 0,0,0],
+                [6,0,0, 1,9,5, 0,0,0],
+                [0,9,8, 0,0,0, 0,6,0],
+                
+                [8,0,0, 0,6,0, 0,0,3],
+                [4,0,0, 8,0,3, 0,0,1],
+                [7,0,0, 0,2,0, 0,0,6],
+                
+                [0,6,0, 0,0,0, 2,8,0],
+                [0,0,0, 4,1,9, 0,0,5],
+                [0,0,0, 0,8,0, 0,7,9]
+            ];
+            
+            prism.solutions[0] = [
+                [5,3,4, 6,7,8, 9,1,2],
+                [6,7,2, 1,9,5, 3,4,8],
+                [1,9,8, 3,4,2, 5,6,7],
+                
+                [8,5,9, 7,6,1, 4,2,3],
+                [4,2,6, 8,5,3, 7,9,1],
+                [7,1,3, 9,2,4, 8,5,6],
+                
+                [9,6,1, 5,3,7, 2,8,4],
+                [2,8,7, 4,1,9, 6,3,5],
+                [3,4,5, 2,8,6, 1,7,9]
+            ];
+
+            // Face 2 - shares left column with Face 1's right column
+            prism.grids[1] = [
+                [2,0,3, 0,2,0, 6,0,0],
+                [8,0,0, 3,0,5, 0,0,1],
+                [7,0,1, 8,0,6, 4,0,0],
+                
+                [3,0,8, 1,0,2, 9,0,0],
+                [1,0,0, 0,0,0, 0,0,8],
+                [6,0,6, 7,0,8, 2,0,0],
+                
+                [4,0,2, 6,0,9, 5,0,0],
+                [5,0,0, 2,0,3, 0,0,9],
+                [9,0,5, 0,1,0, 3,0,0]
+            ];
+            
+            prism.solutions[1] = [
+                [2,8,3, 9,2,1, 6,5,7],
+                [8,6,7, 3,4,5, 8,2,1],
+                [7,5,1, 8,7,6, 4,9,3],
+                
+                [3,4,8, 1,3,2, 9,7,6],
+                [1,2,9, 5,6,4, 1,3,8],
+                [6,3,6, 7,9,8, 2,4,5],
+                
+                [4,7,2, 6,8,9, 5,1,4],
+                [5,1,4, 2,5,3, 7,6,9],
+                [9,9,5, 4,1,7, 3,8,2]
+            ];
+
+            // Face 3 - shares left with Face 2's right, right with Face 1's left
+            prism.grids[2] = [
+                [0,0,0, 2,6,0, 7,0,5],
+                [1,8,0, 0,7,0, 0,9,6],
+                [3,9,0, 0,0,4, 5,0,0],
+                
+                [6,2,0, 1,0,0, 0,4,8],
+                [8,0,4, 6,0,2, 9,0,4],
+                [5,5,0, 0,0,3, 0,2,7],
+                
+                [4,0,9, 3,0,0, 0,7,0],
+                [9,4,0, 0,5,0, 0,3,0],
+                [2,0,3, 0,1,8, 0,0,0]
+            ];
+            
+            prism.solutions[2] = [
+                [7,3,5, 2,6,9, 7,8,5],
+                [1,8,2, 5,7,1, 4,9,6],
+                [3,9,7, 8,3,4, 5,6,1],
+                
+                [6,2,6, 1,9,5, 3,4,8],
+                [8,7,4, 6,8,2, 9,1,4],
+                [5,5,1, 7,4,3, 6,2,7],
+                
+                [4,1,9, 3,2,6, 8,7,9],
+                [9,4,8, 9,5,7, 1,3,2],
+                [2,6,3, 4,1,8, 2,5,3]
+            ];
+
+            renderPrism();
+            applySmartFill();
+            updateStats();
+        }
+
+        function renderPrism() {
+            const container = document.getElementById('prismContainer');
+            container.innerHTML = '';
+
+            for (let face = 0; face < prism.faces; face++) {
+                const faceDiv = document.createElement('div');
+                faceDiv.className = 'face';
+                
+                const label = document.createElement('div');
+                label.className = `face-label face-${face + 1}`;
+                label.textContent = `Face ${face + 1}`;
+                faceDiv.appendChild(label);
+
+                const grid = document.createElement('div');
+                grid.className = 'sudoku-grid';
+                
+                for (let row = 0; row < 9; row++) {
+                    for (let col = 0; col < 9; col++) {
+                        const cell = document.createElement('div');
+                        cell.className = 'cell';
+                        cell.dataset.face = face;
+                        cell.dataset.row = row;
+                        cell.dataset.col = col;
+
+                        // Mark shared cells
+                        if (isSharedCell(face, col)) {
+                            cell.classList.add('shared');
+                        }
+
+                        const givenValue = prism.grids[face][row][col];
+                        const userValue = prism.userEntries[face][row][col];
+                        const cellKey = `${face}-${row}-${col}`;
+
+                        if (givenValue !== 0) {
+                            cell.innerHTML = `<span class="main-number">${givenValue}</span>`;
+                            cell.classList.add('given');
+                        } else if (userValue !== 0) {
+                            cell.innerHTML = `<span class="main-number">${userValue}</span>`;
+                            if (prism.autoFilledCells.has(cellKey)) {
+                                cell.classList.add('auto-filled');
+                            }
+                        } else {
+                            // Show options
+                            const options = getOptions(face, row, col);
+                            if (options.length === 2 || options.length === 3) {
+                                cell.innerHTML = `<span class="options">${options.join('')}</span>`;
+                            } else if (options.length > 3) {
+                                const superscripts = ['⁰','¹','²','³','⁴','⁵','⁶','⁷','⁸','⁹'];
+                                cell.innerHTML = `<span class="option-count">${superscripts[options.length]}</span>`;
+                            }
+                        }
+
+                        // Check if selected
+                        if (prism.selectedCell && 
+                            prism.selectedCell.face === face && 
+                            prism.selectedCell.row === row && 
+                            prism.selectedCell.col === col) {
+                            cell.classList.add('selected');
+                        }
+
+                        cell.onclick = () => selectCell(face, row, col);
+                        grid.appendChild(cell);
+                    }
+                }
+
+                faceDiv.appendChild(grid);
+                container.appendChild(faceDiv);
+            }
+        }
+
+        function selectCell(face, row, col) {
+            // Don't select given cells
+            if (prism.grids[face][row][col] !== 0) return;
+
+            prism.selectedCell = { face, row, col };
+            renderPrism();
+            updateStats();
+            
+            const shared = isSharedCell(face, col) ? ' (SHARED!)' : '';
+            document.getElementById('message').textContent = 
+                `Face ${face + 1}, Cell (${row + 1}, ${col + 1})${shared} - ${getOptions(face, row, col).length} options`;
+        }
+
+        // Get valid options for a cell
+        function getOptions(face, row, col) {
+            const options = new Set([1,2,3,4,5,6,7,8,9]);
+
+            // Remove numbers in same row
+            for (let c = 0; c < 9; c++) {
+                const val = getCellValue(face, row, c);
+                if (val) options.delete(val);
+            }
+
+            // Remove numbers in same column
+            for (let r = 0; r < 9; r++) {
+                const val = getCellValue(face, r, col);
+                if (val) options.delete(val);
+            }
+
+            // Remove numbers in same 3x3 box
+            const boxRow = Math.floor(row / 3) * 3;
+            const boxCol = Math.floor(col / 3) * 3;
+            for (let r = boxRow; r < boxRow + 3; r++) {
+                for (let c = boxCol; c < boxCol + 3; c++) {
+                    const val = getCellValue(face, r, c);
+                    if (val) options.delete(val);
+                }
+            }
+
+            return Array.from(options).sort();
+        }
+
+        // Smart auto-fill
+        function applySmartFill() {
+            if (!prism.autoFillEnabled) return;
+
+            let filled = false;
+            do {
+                filled = false;
+                for (let face = 0; face < prism.faces; face++) {
+                    for (let row = 0; row < 9; row++) {
+                        for (let col = 0; col < 9; col++) {
+                            if (getCellValue(face, row, col) === 0) {
+                                const options = getOptions(face, row, col);
+                                if (options.length === 1) {
+                                    setCellValue(face, row, col, options[0]);
+                                    prism.autoFilledCells.add(`${face}-${row}-${col}`);
+                                    
+                                    // Also mark linked cell if shared
+                                    const linked = getLinkedCell(face, row, col);
+                                    if (linked) {
+                                        prism.autoFilledCells.add(`${linked.face}-${linked.row}-${linked.col}`);
+                                    }
+                                    filled = true;
+                                }
+                            }
+                        }
+                    }
+                }
+            } while (filled);
+
+            renderPrism();
+            updateStats();
+        }
+
+        // Keyboard input
+        window.addEventListener('keydown', (e) => {
+            if (!prism.selectedCell) return;
+
+            const { face, row, col } = prism.selectedCell;
+            
+            const digitMatch = e.code.match(/^Digit(\d)$/);
+            if (digitMatch) {
+                const num = parseInt(digitMatch[1]);
+                if (num >= 1 && num <= 9) {
+                    const options = getOptions(face, row, col);
+                    if (options.includes(num)) {
+                        setCellValue(face, row, col, num);
+                        const shared = isSharedCell(face, col) ? ' (both faces updated!)' : '';
+                        document.getElementById('message').textContent = `Entered ${num}${shared}`;
+                        renderPrism();
+                        applySmartFill();
+                        updateStats();
+                    } else {
+                        document.getElementById('message').textContent = `❌ ${num} is not valid here!`;
+                    }
+                }
+            }
+
+            if (e.key === 'Delete' || e.key === 'Backspace') {
+                setCellValue(face, row, col, 0);
+                prism.autoFilledCells.delete(`${face}-${row}-${col}`);
+                
+                const linked = getLinkedCell(face, row, col);
+                if (linked) {
+                    prism.autoFilledCells.delete(`${linked.face}-${linked.row}-${linked.col}`);
+                }
+                
+                document.getElementById('message').textContent = 'Cell cleared';
+                renderPrism();
+                applySmartFill();
+                updateStats();
+            }
+
+            // Arrow keys
+            if (e.key.startsWith('Arrow')) {
+                e.preventDefault();
+                let newRow = row, newCol = col, newFace = face;
+                
+                if (e.key === 'ArrowUp') newRow = Math.max(0, row - 1);
+                if (e.key === 'ArrowDown') newRow = Math.min(8, row + 1);
+                if (e.key === 'ArrowLeft') {
+                    if (col === 0) {
+                        // Jump to previous face's right edge
+                        newFace = (face - 1 + prism.faces) % prism.faces;
+                        newCol = 8;
+                    } else {
+                        newCol = col - 1;
+                    }
+                }
+                if (e.key === 'ArrowRight') {
+                    if (col === 8) {
+                        // Jump to next face's left edge
+                        newFace = (face + 1) % prism.faces;
+                        newCol = 0;
+                    } else {
+                        newCol = col + 1;
+                    }
+                }
+                
+                selectCell(newFace, newRow, newCol);
+            }
+        });
+
+        function updateStats() {
+            let totalFilled = 0;
+            
+            for (let face = 0; face < prism.faces; face++) {
+                for (let row = 0; row < 9; row++) {
+                    for (let col = 0; col < 9; col++) {
+                        if (getCellValue(face, row, col) !== 0) {
+                            totalFilled++;
+                        }
+                    }
+                }
+            }
+
+            // Subtract duplicates from shared edges
+            totalFilled = totalFilled - 27; // 3 faces × 9 shared cells per edge
+
+            document.getElementById('cellsFilled').textContent = totalFilled;
+            document.getElementById('autoFilledCount').textContent = prism.autoFilledCells.size;
+        }
+
+        function toggleAutoFill() {
+            prism.autoFillEnabled = !prism.autoFillEnabled;
+            const btn = document.getElementById('autoFillBtn');
+            btn.textContent = prism.autoFillEnabled ? '✨ Smart Fill: ON' : '✨ Smart Fill: OFF';
+            btn.classList.toggle('active');
+            
+            if (prism.autoFillEnabled) {
+                applySmartFill();
+            } else {
+                renderPrism();
+            }
+        }
+
+        function checkSolution() {
+            let correct = true;
+            let errors = 0;
+
+            for (let face = 0; face < prism.faces; face++) {
+                for (let row = 0; row < 9; row++) {
+                    for (let col = 0; col < 9; col++) {
+                        const userVal = prism.userEntries[face][row][col];
+                        const correctVal = prism.solutions[face][row][col];
+                        
+                        if (userVal !== 0 && userVal !== correctVal) {
+                            correct = false;
+                            errors++;
+                        }
+                    }
+                }
+            }
+
+            if (errors === 0) {
+                document.getElementById('message').textContent = '✓ All entries correct so far!';
+            } else {
+                document.getElementById('message').textContent = `❌ ${errors} error(s) found!`;
+            }
+        }
+
+        function showHint() {
+            if (!prism.selectedCell) {
+                document.getElementById('message').textContent = '⚠️ Select a cell first!';
+                return;
+            }
+
+            const { face, row, col } = prism.selectedCell;
+            if (prism.grids[face][row][col] !== 0) {
+                document.getElementById('message').textContent = '⚠️ This is a given cell!';
+                return;
+            }
+
+            const correctAnswer = prism.solutions[face][row][col];
+            document.getElementById('message').textContent = `💡 Hint: The answer is ${correctAnswer}`;
+        }
+
+        function newPuzzle() {
+            generatePrismPuzzle();
+            document.getElementById('message').textContent = 'New prism puzzle generated!';
+        }
+
+        // Initialize
+        generatePrismPuzzle();
+    </script>
+</body>
+</html>
