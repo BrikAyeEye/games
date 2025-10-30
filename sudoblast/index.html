@@ -7,6 +7,11 @@
     <meta name="keywords" content="sudoku, puzzle game, brain game, sudoku blast">
     <title>💥 Sudoku Blast - Speed Puzzle Game</title>
     <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='0.9em' font-size='90'>💥</text></svg>">
+    
+    <!-- Firebase for real-time stats (optional - works without it) -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+    
     <style>
         * {
             margin: 0;
@@ -23,6 +28,7 @@
             align-items: center;
             color: #fff;
             padding: 20px;
+            padding-bottom: 60px; /* Space for ticker */
             overflow-x: hidden;
         }
 
@@ -283,7 +289,7 @@
             white-space: normal;
             z-index: 10000;
             pointer-events: none;
-            animation: tooltip-fade-in 0.3s ease-in-out 0.8s both;
+            animation: tooltip-fade-in 0.3s ease-in-out 3s both;
             box-shadow: 0 5px 20px rgba(0,0,0,0.5);
         }
 
@@ -298,7 +304,7 @@
             border-top-color: rgba(0,0,0,0.95);
             z-index: 10000;
             pointer-events: none;
-            animation: tooltip-fade-in 0.3s ease-in-out 0.8s both;
+            animation: tooltip-fade-in 0.3s ease-in-out 3s both;
         }
 
         @keyframes tooltip-fade-in {
@@ -315,6 +321,73 @@
         .powerup-btn:disabled {
             opacity: 0.5;
             cursor: not-allowed;
+        }
+
+        /* Global Activity Ticker */
+        .activity-ticker {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: rgba(0,0,0,0.85);
+            color: white;
+            padding: 10px 0;
+            overflow: hidden;
+            z-index: 5000;
+            border-top: 2px solid rgba(255,255,255,0.2);
+        }
+
+        .ticker-content {
+            display: flex;
+            animation: ticker-scroll 60s linear infinite;
+            white-space: nowrap;
+        }
+
+        .ticker-item {
+            margin: 0 40px;
+            font-size: 14px;
+            opacity: 0.9;
+        }
+
+        @keyframes ticker-scroll {
+            0% { transform: translateX(0); }
+            100% { transform: translateX(-50%); }
+        }
+
+        /* Online Badge */
+        .online-badge {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: rgba(0,0,0,0.8);
+            color: white;
+            padding: 8px 15px;
+            border-radius: 20px;
+            font-size: 13px;
+            z-index: 5000;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.3);
+        }
+
+        .online-dot {
+            width: 8px;
+            height: 8px;
+            background: #00FF00;
+            border-radius: 50%;
+            animation: pulse-dot 2s ease-in-out infinite;
+        }
+
+        @keyframes pulse-dot {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.6; transform: scale(1.2); }
+        }
+
+        .global-stats {
+            font-size: 12px;
+            color: rgba(255,255,255,0.7);
+            margin-top: 3px;
         }
 
         .powerup-count {
@@ -441,20 +514,20 @@
             border-color: white;
         }
 
-        /* Color mode cells - NEON PALETTE */
+        /* Color mode cells - ULTRA BRIGHT CANDY COLORS v2 */
         .cell.color-mode {
             font-size: 0;
         }
 
-        .cell.color-mode.color-1 { background: #FFFFFF !important; border: 4px solid #000 !important; box-shadow: 0 0 10px rgba(255,255,255,0.8); } /* Pure White */
-        .cell.color-mode.color-2 { background: #1a1a1a !important; border: 4px solid #000 !important; box-shadow: 0 0 10px rgba(0,0,0,0.9); } /* Dark Grey (not pure black) */
-        .cell.color-mode.color-3 { background: #FFFF00 !important; box-shadow: 0 0 15px rgba(255,255,0,0.6); } /* Neon Yellow */
-        .cell.color-mode.color-4 { background: #FF00FF !important; box-shadow: 0 0 15px rgba(255,0,255,0.6); } /* Neon Magenta */
-        .cell.color-mode.color-5 { background: #00FF00 !important; box-shadow: 0 0 15px rgba(0,255,0,0.6); } /* Neon Green */
-        .cell.color-mode.color-6 { background: #FF0000 !important; box-shadow: 0 0 15px rgba(255,0,0,0.6); } /* Neon Red */
-        .cell.color-mode.color-7 { background: #FF6600 !important; box-shadow: 0 0 15px rgba(255,102,0,0.6); } /* Neon Orange */
-        .cell.color-mode.color-8 { background: #00FFFF !important; box-shadow: 0 0 15px rgba(0,255,255,0.6); } /* Neon Cyan */
-        .cell.color-mode.color-9 { background: #0000FF !important; box-shadow: 0 0 15px rgba(0,0,255,0.6); } /* Neon Blue */
+        .cell.color-mode.color-1 { background: #FFE135 !important; box-shadow: inset 0 0 10px rgba(255,255,255,0.3); } /* Banana Yellow 🍌 */
+        .cell.color-mode.color-2 { background: #00AA66 !important; box-shadow: inset 0 0 10px rgba(255,255,255,0.3); } /* Mineral Bottle Green 🍾 */
+        .cell.color-mode.color-3 { background: #0099FF !important; box-shadow: inset 0 0 10px rgba(255,255,255,0.3); } /* Bright Blue 💙 */
+        .cell.color-mode.color-4 { background: #FF8800 !important; box-shadow: inset 0 0 10px rgba(255,255,255,0.3); } /* Orange 🧡 */
+        .cell.color-mode.color-5 { background: #FF6B6B !important; box-shadow: inset 0 0 10px rgba(255,255,255,0.3); } /* Pale Red 🌸 */
+        .cell.color-mode.color-6 { background: #C0C0C0 !important; box-shadow: inset 0 0 10px rgba(255,255,255,0.5); } /* Bright Silver ⚪ */
+        .cell.color-mode.color-7 { background: #003399 !important; box-shadow: inset 0 0 10px rgba(255,255,255,0.3); } /* Dark Blue 🔷 */
+        .cell.color-mode.color-8 { background: #7B3F00 !important; box-shadow: inset 0 0 10px rgba(255,255,255,0.3); } /* Chocolate Brown 🍫 */
+        .cell.color-mode.color-9 { background: #40E0D0 !important; box-shadow: inset 0 0 10px rgba(255,255,255,0.3); } /* Turquoise 🩵 */
 
         .cell.color-mode.given {
             opacity: 0.7;
@@ -469,15 +542,15 @@
             margin: 1px;
         }
 
-        .color-dot.color-1 { background: #FFFFFF; border: 2px solid #000; box-shadow: 0 0 5px rgba(255,255,255,0.8); }
-        .color-dot.color-2 { background: #1a1a1a; border: 2px solid #000; }
-        .color-dot.color-3 { background: #FFFF00; }
-        .color-dot.color-4 { background: #FF00FF; }
-        .color-dot.color-5 { background: #00FF00; }
-        .color-dot.color-6 { background: #FF0000; }
-        .color-dot.color-7 { background: #FF6600; }
-        .color-dot.color-8 { background: #00FFFF; }
-        .color-dot.color-9 { background: #0000FF; }
+        .color-dot.color-1 { background: #FFE135; }
+        .color-dot.color-2 { background: #00AA66; }
+        .color-dot.color-3 { background: #0099FF; }
+        .color-dot.color-4 { background: #FF8800; }
+        .color-dot.color-5 { background: #FF6B6B; }
+        .color-dot.color-6 { background: #C0C0C0; border: 2px solid #666; }
+        .color-dot.color-7 { background: #003399; }
+        .color-dot.color-8 { background: #7B3F00; }
+        .color-dot.color-9 { background: #40E0D0; }
 
         /* Emoji mode */
         .cell.symbol-mode {
@@ -754,15 +827,15 @@
             font-weight: bold;
         }
 
-        .number-pad-btn.color-1 { background: #FFFFFF; color: #000; border: 3px solid #000; }
-        .number-pad-btn.color-2 { background: #1a1a1a; color: #FFF; border: 3px solid #000; }
-        .number-pad-btn.color-3 { background: #FFFF00; color: #000; }
-        .number-pad-btn.color-4 { background: #FF00FF; color: #FFF; }
-        .number-pad-btn.color-5 { background: #00FF00; color: #000; }
-        .number-pad-btn.color-6 { background: #FF0000; color: #FFF; }
-        .number-pad-btn.color-7 { background: #FF6600; color: #000; }
-        .number-pad-btn.color-8 { background: #00FFFF; color: #000; }
-        .number-pad-btn.color-9 { background: #0000FF; color: #FFF; }
+        .number-pad-btn.color-1 { background: #FFE135; color: #000; }
+        .number-pad-btn.color-2 { background: #00AA66; color: #FFF; }
+        .number-pad-btn.color-3 { background: #0099FF; color: #FFF; }
+        .number-pad-btn.color-4 { background: #FF8800; color: #000; }
+        .number-pad-btn.color-5 { background: #FF6B6B; color: #000; }
+        .number-pad-btn.color-6 { background: #C0C0C0; color: #000; border: 2px solid #666; }
+        .number-pad-btn.color-7 { background: #003399; color: #FFF; }
+        .number-pad-btn.color-8 { background: #7B3F00; color: #FFF; }
+        .number-pad-btn.color-9 { background: #40E0D0; color: #000; }
 
         /* Emoji mode buttons */
         .number-pad-btn.symbol-mode {
@@ -969,6 +1042,22 @@
     </style>
 </head>
 <body>
+    <!-- Online Badge -->
+    <div class="online-badge">
+        <div class="online-dot"></div>
+        <div>
+            <div><span id="onlineCount">...</span> online</div>
+            <div class="global-stats"><span id="gamesCount">...</span> games today</div>
+        </div>
+    </div>
+
+    <!-- Activity Ticker -->
+    <div class="activity-ticker">
+        <div class="ticker-content" id="tickerContent">
+            <!-- Generated dynamically -->
+        </div>
+    </div>
+
     <!-- Tutorial Overlay -->
     <div class="overlay" id="tutorialOverlay">
         <div class="tutorial-box">
@@ -1258,27 +1347,40 @@
             9: '🌈'   // Rainbow
         };
 
+        // Color names for laser message
+        const COLOR_NAMES = {
+            1: '🍌 Yellows',
+            2: '🍾 Greens',
+            3: '💙 Bright Blues',
+            4: '🧡 Oranges',
+            5: '🌸 Pale Reds',
+            6: '⚪ Silvers',
+            7: '🔷 Dark Blues',
+            8: '🍫 Browns',
+            9: '🩵 Turquoises'
+        };
+
         const DIFFICULTY_SETTINGS = {
             easy: {
                 givens: [4, 5],
-                powerUps: { singles: 4, show23: 4, triplets: 2, clearWrongs: 3 },
-                earnRate: 1.5,
+                powerUps: { singles: 2, show23: 3, triplets: 1, clearWrongs: 2 },  // Total: 8 power-ups
+                earnRate: 1,  // Earn 1 Singles per box
                 refillGivens: [3, 4],
-                boxesToWin: 18  // Easy: clear 18 boxes (was medium)
+                boxesToWin: 18  // Easy: clear 18 boxes - needs strategy!
             },
             medium: {
                 givens: [3, 4],
-                powerUps: { singles: 2, show23: 2, triplets: 1, clearWrongs: 1 },
-                earnRate: 1,
+                powerUps: { singles: 3, show23: 3, triplets: 1, clearWrongs: 2 },  // Total: 9 power-ups
+                earnRate: 1.25,  // Earn 1.25 Singles per box (about 1 per box)
                 refillGivens: [3, 3],
-                boxesToWin: 9  // Medium: clear 9 boxes (was hard)
+                boxesToWin: 9  // Medium: clear 9 boxes - balanced
             },
             hard: {
                 givens: [2, 3],  // Very few starting clues!
-                powerUps: { singles: 1, show23: 1, triplets: 0, clearWrongs: 0 },  // Barely any power-ups
-                earnRate: 0.5,  // Earn power-ups slowly
+                powerUps: { singles: 1, show23: 1, triplets: 0, clearWrongs: 0 },  // Total: 2 power-ups
+                earnRate: 0.5,  // Earn 0.5 Singles per box
                 refillGivens: [2, 3],  // Minimal refill
-                boxesToWin: 9  // Still 9 boxes but MUCH harder
+                boxesToWin: 9  // Hard: 9 boxes but BRUTAL
             }
         };
 
@@ -1679,10 +1781,15 @@
                 playSound('powerup');
                 
                 // Show message
-                const displayValue = game.displayMode === 'symbols' ? SYMBOLS[cellValue] : 
-                                   game.displayMode === 'colors' ? `Color ${cellValue}` : 
-                                   cellValue;
-                document.getElementById('message').textContent = `🔦 Laser: All ${displayValue}s are glowing!`;
+                let displayValue;
+                if (game.displayMode === 'symbols') {
+                    displayValue = SYMBOLS[cellValue];
+                } else if (game.displayMode === 'colors') {
+                    displayValue = COLOR_NAMES[cellValue];
+                } else {
+                    displayValue = cellValue + 's';
+                }
+                document.getElementById('message').textContent = `🔦 Laser: All ${displayValue} are glowing!`;
             }
             
             renderGrid();
@@ -2082,6 +2189,10 @@
                              game.powerUpsUsedThisGame <= 5 ? '👍 GREAT! 👍' : 
                              '✅ COMPLETE! ✅';
             
+            // Record game played & get ranking
+            recordGamePlayed();
+            const rankingMessage = showPlayerRanking(game.score);
+            
             document.getElementById('message').innerHTML = `
                 <div style="font-size: 24px; font-weight: bold; margin-bottom: 15px;">${powEmoji}</div>
                 <div><strong>${difficultyName}</strong> • ${settings.boxesToWin} boxes cleared</div>
@@ -2093,6 +2204,9 @@
                 <div style="margin-top: 5px;">Time Bonus: +${timePoints} pts</div>
                 <div style="margin-top: 15px; font-size: 22px; color: #FF6B6B;">
                     <strong>FINAL SCORE: ${game.score}</strong>
+                </div>
+                <div style="margin-top: 15px; font-size: 16px; color: #4ECDC4; font-weight: bold;">
+                    ${rankingMessage}
                 </div>
             `;
             
@@ -2415,6 +2529,157 @@
         // ============================================
         // INITIALIZATION
         // ============================================
+        // ============================================
+        // GLOBAL ACTIVITY SYSTEM (Hybrid: Real + Fake)
+        // ============================================
+        
+        let firebaseEnabled = false;
+        let onlineCount = 0;
+        let gamesPlayedToday = 0;
+
+        // Try to initialize Firebase (optional - works without it)
+        try {
+            // PASTE YOUR FIREBASE CONFIG HERE (optional)
+            // const firebaseConfig = {
+            //     apiKey: "YOUR_API_KEY",
+            //     authDomain: "YOUR_PROJECT.firebaseapp.com",
+            //     databaseURL: "https://YOUR_PROJECT.firebaseio.com",
+            //     projectId: "YOUR_PROJECT"
+            // };
+            // firebase.initializeApp(firebaseConfig);
+            // firebaseEnabled = true;
+        } catch (e) {
+            console.log('Running without Firebase (using simulated stats)');
+        }
+
+        // Generate simulated online count (varies throughout day)
+        function getSimulatedOnlineCount() {
+            const hour = new Date().getHours();
+            const minute = new Date().getMinutes();
+            
+            // More realistic variance based on time
+            let base;
+            if (hour >= 20 && hour <= 22) base = 45; // Peak evening
+            else if (hour >= 18 && hour <= 23) base = 35; // Evening
+            else if (hour >= 12 && hour <= 17) base = 25; // Afternoon
+            else if (hour >= 9 && hour <= 11) base = 18; // Morning
+            else base = 8; // Night/early morning
+            
+            // Add some randomness (+/- 40%)
+            const variance = Math.random() * base * 0.8 - base * 0.4;
+            const count = Math.max(3, Math.floor(base + variance));
+            
+            // Slight incremental changes (not jumps)
+            if (window.lastOnlineCount) {
+                const maxChange = 3;
+                const diff = count - window.lastOnlineCount;
+                const limitedDiff = Math.max(-maxChange, Math.min(maxChange, diff));
+                window.lastOnlineCount += limitedDiff;
+                return Math.max(3, Math.floor(window.lastOnlineCount));
+            }
+            
+            window.lastOnlineCount = count;
+            return count;
+        }
+
+        // Generate simulated games count (accumulates through day realistically)
+        function getSimulatedGamesCount() {
+            const hour = new Date().getHours();
+            const minute = new Date().getMinutes();
+            const dayProgress = (hour * 60 + minute) / (24 * 60);
+            
+            // More realistic daily total (300-1200 games per day)
+            const baseGames = 200 + Math.floor(dayProgress * 800);
+            const variance = Math.floor(Math.random() * 50);
+            
+            // Slow incremental changes
+            if (window.lastGamesCount) {
+                const increment = Math.floor(Math.random() * 3); // 0-2 games added
+                window.lastGamesCount += increment;
+                return window.lastGamesCount;
+            }
+            
+            window.lastGamesCount = baseGames + variance;
+            return window.lastGamesCount;
+        }
+
+        // Update stats display
+        function updateGlobalStats() {
+            if (firebaseEnabled) {
+                // Real Firebase logic here
+                // firebase.database().ref('stats/online').once('value', ...)
+            } else {
+                // Simulated stats
+                onlineCount = getSimulatedOnlineCount();
+                gamesPlayedToday = getSimulatedGamesCount();
+            }
+            
+            document.getElementById('onlineCount').textContent = onlineCount.toLocaleString();
+            document.getElementById('gamesCount').textContent = gamesPlayedToday.toLocaleString();
+        }
+
+        // Country flags and names
+        const countries = [
+            { flag: '🇺🇸', name: 'USA' },
+            { flag: '🇬🇧', name: 'UK' },
+            { flag: '🇩🇪', name: 'Germany' },
+            { flag: '🇫🇷', name: 'France' },
+            { flag: '🇯🇵', name: 'Japan' },
+            { flag: '🇧🇷', name: 'Brazil' },
+            { flag: '🇨🇦', name: 'Canada' },
+            { flag: '🇦🇺', name: 'Australia' },
+            { flag: '🇮🇳', name: 'India' },
+            { flag: '🇰🇷', name: 'Korea' },
+            { flag: '🇲🇽', name: 'Mexico' },
+            { flag: '🇪🇸', name: 'Spain' },
+            { flag: '🇮🇹', name: 'Italy' },
+            { flag: '🇳🇱', name: 'Netherlands' },
+            { flag: '🇸🇪', name: 'Sweden' }
+        ];
+
+        // Generate fake score entry
+        function generateFakeScore() {
+            const country = countries[Math.floor(Math.random() * countries.length)];
+            const difficulties = ['Easy', 'Medium', 'Hard'];
+            const diff = difficulties[Math.floor(Math.random() * difficulties.length)];
+            const baseScore = diff === 'Easy' ? 8000 : diff === 'Medium' ? 15000 : 25000;
+            const score = Math.floor(baseScore + Math.random() * baseScore * 0.5);
+            
+            return `${country.flag} Player from ${country.name}: ${score.toLocaleString()} pts (${diff})`;
+        }
+
+        // Initialize ticker with fake scores
+        function initTicker() {
+            const tickerContent = document.getElementById('tickerContent');
+            let items = '';
+            
+            // Generate 20 fake scores (duplicated for seamless loop)
+            for (let i = 0; i < 40; i++) {
+                items += `<div class="ticker-item">${generateFakeScore()}</div>`;
+            }
+            
+            tickerContent.innerHTML = items;
+        }
+
+        // Increment games counter when player finishes
+        function recordGamePlayed() {
+            if (firebaseEnabled) {
+                // Real Firebase increment
+                // firebase.database().ref('stats/gamesPlayedToday').transaction(...)
+            } else {
+                // Just update local count
+                gamesPlayedToday++;
+                document.getElementById('gamesCount').textContent = gamesPlayedToday.toLocaleString();
+            }
+        }
+
+        // Show player ranking after game
+        function showPlayerRanking(playerScore) {
+            const percentile = 40 + Math.random() * 40; // 40-80%
+            const rank = Math.floor((100 - percentile) * onlineCount / 100);
+            return `You ranked #${rank} today! Better than ${percentile.toFixed(0)}% of players! 🎉`;
+        }
+
         window.onload = () => {
             // Load sound preference
             soundEnabled = localStorage.getItem('soundEnabled') !== 'false';
@@ -2422,6 +2687,16 @@
 
             // Clean UI is always on
             updateMonkControls();
+
+            // Initialize global activity
+            updateGlobalStats();
+            initTicker();
+            
+            // Update stats every 30 seconds
+            setInterval(updateGlobalStats, 30000);
+            
+            // Refresh ticker every 60 seconds with new fake scores
+            setInterval(initTicker, 60000);
 
             // Show tutorial for first-time users
             if (!localStorage.getItem('tutorialSeen')) {
