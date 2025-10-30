@@ -1310,6 +1310,8 @@
             powerUpsUsedThisGame: 0,  // Track power-up usage for multiplier
             laserHighlightNumber: null,  // Track which number is being laser-highlighted
             laserHighlightCell: null,  // Track which cell was double-clicked
+            laserCooldownEnd: null,  // Track when laser cooldown ends
+            laserCooldownInterval: null,  // Interval for countdown display
             startTime: null,
             timerInterval: null,
             difficulty: 'medium',
@@ -1366,21 +1368,24 @@
                 powerUps: { singles: 2, show23: 3, triplets: 1, clearWrongs: 2 },  // Total: 8 power-ups
                 earnRate: 1,  // Earn 1 Singles per box
                 refillGivens: [3, 4],
-                boxesToWin: 18  // Easy: clear 18 boxes - needs strategy!
+                boxesToWin: 18,  // Easy: clear 18 boxes - needs strategy!
+                laserCooldown: 10  // 10 seconds cooldown
             },
             medium: {
                 givens: [3, 4],
                 powerUps: { singles: 3, show23: 3, triplets: 1, clearWrongs: 2 },  // Total: 9 power-ups
                 earnRate: 1.25,  // Earn 1.25 Singles per box (about 1 per box)
                 refillGivens: [3, 3],
-                boxesToWin: 9  // Medium: clear 9 boxes - balanced
+                boxesToWin: 9,  // Medium: clear 9 boxes - balanced
+                laserCooldown: 20  // 20 seconds cooldown
             },
             hard: {
                 givens: [2, 3],  // Very few starting clues!
                 powerUps: { singles: 1, show23: 1, triplets: 0, clearWrongs: 0 },  // Total: 2 power-ups
                 earnRate: 0.5,  // Earn 0.5 Singles per box
                 refillGivens: [2, 3],  // Minimal refill
-                boxesToWin: 9  // Hard: 9 boxes but BRUTAL
+                boxesToWin: 9,  // Hard: 9 boxes but BRUTAL
+                laserCooldown: 45  // 45 seconds cooldown
             }
         };
 
@@ -1492,13 +1497,20 @@
             game.powerUpsUsedThisGame = 0;  // Reset power-up count
             game.laserHighlightNumber = null;  // Clear laser highlight
             game.laserHighlightCell = null;
+            game.laserCooldownEnd = null;  // Clear laser cooldown
+            
+            // Clear intervals
+            if (game.laserCooldownInterval) {
+                clearInterval(game.laserCooldownInterval);
+                game.laserCooldownInterval = null;
+            }
+            if (game.timerInterval) clearInterval(game.timerInterval);
             
             const settings = DIFFICULTY_SETTINGS[game.difficulty];
             game.powerUps = { ...settings.powerUps };
             
             updateStats(); // Initialize display including multiplier
             
-            if (game.timerInterval) clearInterval(game.timerInterval);
             game.startTime = Date.now();
             game.lastActionTime = Date.now();
             game.timerInterval = setInterval(updateTimer, 100);
@@ -1730,14 +1742,27 @@
                                 cell.classList.add('laser-highlight');
                             }
                             
-                            // Also highlight the crosshair lines from each instance
+                            // Also highlight the crosshair lines AND boxes from each instance
                             for (let r = 0; r < 9; r++) {
                                 for (let c = 0; c < 9; c++) {
                                     const checkValue = game.grid[r][c] || game.userEntries[r][c];
                                     if (checkValue === game.laserHighlightNumber) {
-                                        // This cell has the target number - draw lines from it
+                                        // This cell has the target number
+                                        
+                                        // Draw lines from it (crosshairs)
                                         if (row === r || col === c) {
                                             cell.style.background = 'rgba(255, 193, 7, 0.3)';
+                                        }
+                                        
+                                        // Highlight the 3x3 box containing this instance
+                                        const boxStartRow = Math.floor(r / 3) * 3;
+                                        const boxStartCol = Math.floor(c / 3) * 3;
+                                        if (row >= boxStartRow && row < boxStartRow + 3 &&
+                                            col >= boxStartCol && col < boxStartCol + 3) {
+                                            // This cell is in the same box as an instance
+                                            if (!cell.style.background || cell.style.background === '') {
+                                                cell.style.background = 'rgba(255, 193, 7, 0.15)';
+                                            }
                                         }
                                     }
                                 }
@@ -1757,7 +1782,32 @@
             return Math.floor(row / 3) * 3 + Math.floor(col / 3);
         }
 
+        function updateLaserCooldownDisplay() {
+            const now = Date.now();
+            if (game.laserCooldownEnd && now < game.laserCooldownEnd) {
+                const secondsLeft = Math.ceil((game.laserCooldownEnd - now) / 1000);
+                document.getElementById('message').textContent = `🔦 Laser cooldown: ❌ ${secondsLeft}s`;
+            } else if (game.laserCooldownEnd) {
+                // Cooldown finished
+                game.laserCooldownEnd = null;
+                if (game.laserCooldownInterval) {
+                    clearInterval(game.laserCooldownInterval);
+                    game.laserCooldownInterval = null;
+                }
+                document.getElementById('message').textContent = '🔦 Laser ready! ✓';
+            }
+        }
+
         function toggleLaserHighlight(row, col) {
+            // Check if laser is on cooldown
+            const now = Date.now();
+            if (game.laserCooldownEnd && now < game.laserCooldownEnd) {
+                const secondsLeft = Math.ceil((game.laserCooldownEnd - now) / 1000);
+                document.getElementById('message').textContent = `🔦 Laser cooldown: ❌ ${secondsLeft}s`;
+                playSound('click');
+                return;
+            }
+
             const cellValue = game.grid[row][col] || game.userEntries[row][col];
             
             // If no value, clear highlight
@@ -1775,10 +1825,22 @@
                 playSound('click');
                 document.getElementById('message').textContent = '🔦 Laser off';
             } else {
-                // Set new highlight
+                // Set new highlight and start cooldown
                 game.laserHighlightNumber = cellValue;
                 game.laserHighlightCell = { row, col };
                 playSound('powerup');
+                
+                // Start cooldown based on difficulty
+                const settings = DIFFICULTY_SETTINGS[game.difficulty];
+                game.laserCooldownEnd = Date.now() + (settings.laserCooldown * 1000);
+                
+                // Clear existing interval if any
+                if (game.laserCooldownInterval) {
+                    clearInterval(game.laserCooldownInterval);
+                }
+                
+                // Start countdown display
+                game.laserCooldownInterval = setInterval(updateLaserCooldownDisplay, 1000);
                 
                 // Show message
                 let displayValue;
