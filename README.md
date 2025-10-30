@@ -5,7 +5,7 @@ A collection of web-based games that can be played directly in your browser.
 ## 🕹️ Available Games
 
 - **[Sudoku Blast](./sudoblast/)** - Classic Sudoku puzzle game with explosive fun!
-- **[Sudoku Blaster](./sudoblaster/)** - Blast through Sudoku puzzles at lightning speed!
+- **[Sudoku Asteroid Blaster](./sudokuasteroidblaster/)** - Battle asteroids while solving Sudoku puzzles!
 - **[Sudoku Prism](./sudokuprism/)** - Experience Sudoku in vibrant prismatic colors!
 - **[Sudoku Tower](./sudokutower/)** - Build your way up the tower of Sudoku challenges!
 
