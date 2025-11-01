@@ -2,7 +2,10 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
     <meta name="description" content="Sudoku Blast - Fast-paced explosive Sudoku puzzle game! Complete boxes, earn power-ups, and beat your high score!">
     <meta name="keywords" content="sudoku, puzzle game, brain game, sudoku blast">
     <title>💥 Sudoku Blast - Speed Puzzle Game</title>
@@ -53,7 +56,7 @@
 
         .game-area {
             display: flex;
-            gap: 20px;
+            gap: 0px; /* No gap - pad aligns directly with board */
             justify-content: center;
             align-items: flex-start;
             flex-wrap: nowrap;
@@ -121,9 +124,6 @@
             z-index: 10;
         }
 
-        .cell.laser-highlight {
-            box-shadow: 0 0 20px 4px rgba(255, 193, 7, 0.9), inset 0 0 15px rgba(255, 193, 7, 0.5);
-        }
 
         .cell.correct-flash {
             animation: correctFlash 0.5s;
@@ -739,16 +739,17 @@
         /* Number Pad */
         .number-pad {
             background: #FFFFFF !important;
-            padding: 25px !important;
-            border-radius: 20px !important;
+            padding: 15px !important;
+            border-radius: 15px !important;
             box-shadow: 0 15px 50px rgba(0,0,0,0.6) !important;
-            margin: 30px auto 20px auto !important;
-            max-width: 500px !important;
+            margin: 25px 0 0 0 !important; /* Match sudoku-container top padding, no left margin - aligns with board */
+            max-width: 350px !important;
             width: 100% !important;
             display: none !important;
-            border: 5px solid #FF6B6B !important;
+            border: 3px solid #FF6B6B !important;
             position: relative !important;
             z-index: 9999 !important;
+            align-self: flex-start !important; /* Align to top */
         }
 
         body .number-pad.active {
@@ -768,31 +769,31 @@
         .number-pad-title {
             text-align: center;
             font-weight: bold;
-            margin-bottom: 15px;
+            margin-bottom: 10px;
             color: #FF6B6B;
-            font-size: 18px;
+            font-size: 14px;
         }
 
         .number-pad-grid {
             display: grid;
             grid-template-columns: repeat(3, 1fr);
-            gap: 10px;
+            gap: 6px;
         }
 
         .number-pad-btn {
             aspect-ratio: 1;
-            border: 3px solid #333;
-            border-radius: 10px;
+            border: 2px solid #333;
+            border-radius: 8px;
             background: #F5F5F5;
-            font-size: 28px;
+            font-size: 20px;
             font-weight: bold;
             cursor: pointer;
             transition: all 0.2s;
             display: flex;
             align-items: center;
             justify-content: center;
-            min-height: 70px;
-            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+            min-height: 50px;
+            box-shadow: 0 3px 6px rgba(0,0,0,0.2);
         }
 
         .number-pad-btn:hover {
@@ -821,9 +822,9 @@
 
         /* Color mode buttons - NEON PALETTE */
         .number-pad-btn.color-mode {
-            font-size: 18px;
+            font-size: 14px;
             color: #333;
-            border: 3px solid #333;
+            border: 2px solid #333;
             font-weight: bold;
         }
 
@@ -839,18 +840,20 @@
 
         /* Emoji mode buttons */
         .number-pad-btn.symbol-mode {
-            font-size: 40px;
-            border: 3px solid #333;
+            font-size: 28px;
+            border: 2px solid #333;
         }
 
         .number-pad-delete {
-            grid-column: span 3;
+            grid-column: span 1 !important; /* Same width as number buttons */
             background: #F44336 !important;
             color: white !important;
-            font-size: 14px !important;
-            border: none !important;
-            min-height: 40px !important;
-            padding: 8px !important;
+            font-size: 12px !important;
+            border: 2px solid #CC0000 !important;
+            min-height: 40px !important; /* Smaller than number buttons (50px) */
+            max-height: 40px !important;
+            padding: 0 !important;
+            aspect-ratio: 1 !important; /* Keep square but smaller */
         }
 
         @media (max-width: 768px) {
@@ -984,6 +987,11 @@
         }
 
         /* Mobile responsive */
+        /* Mobile-only elements - hidden on desktop */
+        .mobile-only {
+            display: none;
+        }
+
         @media (max-width: 1200px) {
             .game-area {
                 flex-wrap: wrap;
@@ -996,38 +1004,229 @@
             }
         }
 
+        /* Desktop: Number pad should appear in right panel area */
+        @media (min-width: 769px) {
+            .mobile-only {
+                display: none !important;
+            }
+
+            /* Remove absolute positioning - let flex layout handle it naturally */
+            .number-pad {
+                position: relative !important;
+                /* Let it flow in flex container naturally */
+            }
+
+            .right-panel {
+                display: flex;
+                flex-direction: column;
+                position: relative;
+            }
+        }
+
         @media (max-width: 768px) {
             h1 {
-                font-size: 28px;
+                font-size: 24px;
+                margin-bottom: 5px;
+            }
+
+            body {
+                padding: 10px;
+                padding-bottom: 80px; /* Space for ticker */
+            }
+
+            .container {
+                max-width: 100%;
             }
 
             .game-area {
-                flex-direction: column;
+                flex-direction: column !important;
+                gap: 10px !important;
+                display: flex !important;
             }
 
+            /* Ensure proper order on mobile: power-ups first, then board, then pad */
+            .powerup-container.mobile-only {
+                order: 1;
+            }
+
+            .sudoku-container {
+                order: 2;
+            }
+
+            .number-pad {
+                order: 3;
+            }
+
+            /* Hide side panels on mobile - everything stacks vertically */
             .left-panel, .right-panel {
-                flex: 1 1 100%;
+                display: none !important;
+            }
+
+            .sudoku-container {
                 max-width: 100%;
-                min-width: 100%;
+                padding: 15px;
+                margin: 0 auto;
             }
 
             .cell {
-                min-width: 35px;
-                font-size: 20px;
+                min-width: 32px;
+                font-size: 18px;
+            }
+
+            .cell.symbol-mode {
+                font-size: 24px;
+            }
+
+            /* Number pad - MOBILE: Below board, 2×5 grid (2 rows × 5 columns), SMALLER */
+            .number-pad {
+                position: relative !important; /* Override desktop absolute positioning */
+                top: auto !important;
+                right: auto !important;
+                width: 100% !important;
+                max-width: 100% !important;
+                padding: 8px !important;
+                margin: 10px auto !important; /* Center on mobile, auto left/right */
+                border-width: 2px !important;
+                align-self: stretch !important; /* Full width on mobile */
+            }
+
+            .number-pad-title {
+                font-size: 12px !important;
+                margin-bottom: 8px !important;
+            }
+
+            .number-pad-grid {
+                grid-template-columns: repeat(5, 1fr) !important; /* FORCE 5 columns for mobile */
+                gap: 4px !important;
+            }
+
+            .number-pad-btn {
+                min-height: 40px !important;
+                max-height: 40px !important;
+                font-size: 18px !important;
+                border-width: 2px !important;
+                padding: 4px !important;
+                aspect-ratio: 1 !important;
+            }
+
+            .number-pad-btn.symbol-mode {
+                font-size: 22px !important;
+            }
+
+            .number-pad-btn.color-mode {
+                font-size: 12px !important;
+            }
+
+            .number-pad-delete {
+                grid-column: span 1 !important; /* Don't span on mobile - just one cell */
+                min-height: 40px !important;
+                max-height: 40px !important;
+                font-size: 11px !important;
+                padding: 4px !important;
+            }
+
+            /* Power-ups - MOBILE: Horizontal small buttons at TOP */
+            .mobile-only {
+                display: block !important;
+            }
+
+            .powerup-container {
+                display: block !important;
+                margin: 0 auto 10px; /* Top margin, bottom margin */
+                max-width: 100%;
+                padding: 0 10px;
+                order: -1; /* Force to top via flexbox order */
+            }
+
+            .powerup-grid {
+                display: grid;
+                grid-template-columns: repeat(4, 1fr);
+                gap: 6px;
+                max-width: 100%;
+            }
+
+            .powerup-btn {
+                width: 100% !important;
+                padding: 8px 4px !important;
+                margin: 0 !important;
+                font-size: 18px !important;
+                min-height: 50px;
+                display: flex;
+                flex-direction: column;
+                justify-content: center;
+                align-items: center;
+            }
+
+            .powerup-btn span:nth-child(1) {
+                display: none;
+            }
+
+            .powerup-btn span:nth-child(2) {
+                display: block;
+                font-size: 24px;
+                margin-bottom: 2px;
+            }
+
+            .powerup-count {
+                position: absolute;
+                top: 2px;
+                right: 2px;
+                background: rgba(255,255,255,0.95);
+                color: #333;
+                font-size: 10px;
+                padding: 2px 4px;
+                border-radius: 8px;
+                font-weight: bold;
+            }
+
+            /* Stats - make smaller */
+            .stats {
+                font-size: 14px;
+                padding: 8px;
+                margin-bottom: 10px;
+            }
+
+            .stat-item {
+                font-size: 12px;
             }
 
             .stat-value {
-                font-size: 20px;
+                font-size: 16px;
+            }
+
+            /* Controls - Hide monk controls or make them tiny */
+            .monk-controls {
+                display: none; /* Hide on mobile - can access via menu if needed */
+            }
+
+            /* Top controls - make smaller */
+            .top-controls {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                margin-bottom: 10px;
+                gap: 10px;
+            }
+
+            .top-controls button {
+                padding: 6px 12px;
+                font-size: 12px;
+                flex: 1;
             }
 
             .tutorial-box, .game-over-box {
-                padding: 20px;
+                padding: 15px;
+                font-size: 14px;
+            }
+
+            .stat-value {
+                font-size: 18px;
             }
         }
 
         @media (max-width: 480px) {
-            body {
-                padding: 10px;
+            h1 {
+                font-size: 20px;
             }
 
             .cell {
@@ -1035,8 +1234,35 @@
                 font-size: 16px;
             }
 
+            .cell.symbol-mode {
+                font-size: 20px;
+            }
+
             .sudoku-container {
                 padding: 10px;
+            }
+
+            .number-pad-btn {
+                min-height: 40px !important;
+                font-size: 18px !important;
+            }
+
+            .number-pad-btn.symbol-mode {
+                font-size: 24px !important;
+            }
+
+            .powerup-btn {
+                font-size: 16px !important;
+                padding: 6px 3px !important;
+                min-height: 45px;
+            }
+
+            .powerup-btn span:nth-child(2) {
+                font-size: 20px;
+            }
+
+            .stats {
+                font-size: 12px;
             }
         }
     </style>
@@ -1194,6 +1420,36 @@
                 </div>
             </div>
 
+            <!-- Power-ups for MOBILE - At the TOP (always visible) -->
+            <div class="powerup-container mobile-only">
+                <div class="powerup-grid">
+                    <button class="powerup-btn powerup-singles" onclick="usePowerUp('singles')" id="singlesBtnMobile" 
+                            data-tooltip="Auto-fills cells with only 1 possible number">
+                        <span>1️⃣ Singles</span>
+                        <span>1️⃣</span>
+                        <span class="powerup-count" id="singlesCountMobile">3</span>
+                    </button>
+                    <button class="powerup-btn powerup-show23" onclick="usePowerUp('show23')" id="show23BtnMobile"
+                            data-tooltip="Shows cells with 2-3 options for 60 seconds">
+                        <span>👀 Show 2-3s</span>
+                        <span>👀</span>
+                        <span class="powerup-count" id="show23CountMobile">3</span>
+                    </button>
+                    <button class="powerup-btn powerup-triplets" onclick="usePowerUp('triplets')" id="tripletsBtnMobile"
+                            data-tooltip="Solves tricky cells with 3 or fewer options">
+                        <span>🔥 Triplets</span>
+                        <span>🔥</span>
+                        <span class="powerup-count" id="tripletsCountMobile">1</span>
+                    </button>
+                    <button class="powerup-btn powerup-clearwrongs" onclick="usePowerUp('clearWrongs')" id="clearWrongsBtnMobile"
+                            data-tooltip="Removes all incorrect entries from the board">
+                        <span>🗑️ Clear Wrong</span>
+                        <span>🗑️</span>
+                        <span class="powerup-count" id="clearWrongsCountMobile">2</span>
+                    </button>
+                </div>
+            </div>
+
             <div class="sudoku-container" id="sudokuContainer">
                 <div class="sudoku-grid" id="sudokuGrid"></div>
                 
@@ -1212,15 +1468,18 @@
                     </div>
                 </div>
             </div>
-            
-            <!-- Number Pad - RIGHT PANEL -->
-            <div class="right-panel">
-                <div class="number-pad" id="numberPad" style="display: none; background: white !important; border: 5px solid #FF6B6B !important; padding: 20px !important; border-radius: 15px !important; box-shadow: 0 10px 40px rgba(0,0,0,0.3) !important; margin: 0 !important;">
-                    <div class="number-pad-title" style="color: #FF6B6B !important; font-size: 18px !important; font-weight: bold !important; text-align: center !important; margin-bottom: 15px !important;">✨ Select Number ✨</div>
-                    <div class="number-pad-grid" id="numberPadGrid" style="display: grid !important; grid-template-columns: repeat(3, 1fr) !important; gap: 12px !important;">
-                        <!-- Generated dynamically -->
-                    </div>
+
+            <!-- Number Pad - MOBILE: Below board (2×5 grid), DESKTOP: In right panel (3×3) -->
+            <div class="number-pad" id="numberPad">
+                <div class="number-pad-title">✨ Select Number ✨</div>
+                <div class="number-pad-grid" id="numberPadGrid">
+                    <!-- Generated dynamically -->
                 </div>
+            </div>
+            
+            <!-- Number Pad - RIGHT PANEL (DESKTOP ONLY) -->
+            <div class="right-panel">
+                <!-- Desktop number pad is now outside - this div just holds space on desktop -->
             </div>
         </div>
     </div>
@@ -1308,10 +1567,6 @@
             clearedBoxes: new Set(),
             scoreMultiplier: 2.0,  // Start with 2x multiplier
             powerUpsUsedThisGame: 0,  // Track power-up usage for multiplier
-            laserHighlightNumber: null,  // Track which number is being laser-highlighted
-            laserHighlightCell: null,  // Track which cell was double-clicked
-            laserCooldownEnd: null,  // Track when laser cooldown ends
-            laserCooldownInterval: null,  // Interval for countdown display
             startTime: null,
             timerInterval: null,
             difficulty: 'medium',
@@ -1349,43 +1604,27 @@
             9: '🌈'   // Rainbow
         };
 
-        // Color names for laser message
-        const COLOR_NAMES = {
-            1: '🍌 Yellows',
-            2: '🍾 Greens',
-            3: '💙 Bright Blues',
-            4: '🧡 Oranges',
-            5: '🌸 Pale Reds',
-            6: '⚪ Silvers',
-            7: '🔷 Dark Blues',
-            8: '🍫 Browns',
-            9: '🩵 Turquoises'
-        };
-
         const DIFFICULTY_SETTINGS = {
             easy: {
                 givens: [4, 5],
                 powerUps: { singles: 2, show23: 3, triplets: 1, clearWrongs: 2 },  // Total: 8 power-ups
                 earnRate: 1,  // Earn 1 Singles per box
                 refillGivens: [3, 4],
-                boxesToWin: 18,  // Easy: clear 18 boxes - needs strategy!
-                laserCooldown: 10  // 10 seconds cooldown
+                boxesToWin: 18  // Easy: clear 18 boxes - needs strategy!
             },
             medium: {
                 givens: [3, 4],
                 powerUps: { singles: 3, show23: 3, triplets: 1, clearWrongs: 2 },  // Total: 9 power-ups
                 earnRate: 1.25,  // Earn 1.25 Singles per box (about 1 per box)
                 refillGivens: [3, 3],
-                boxesToWin: 9,  // Medium: clear 9 boxes - balanced
-                laserCooldown: 20  // 20 seconds cooldown
+                boxesToWin: 9  // Medium: clear 9 boxes - balanced
             },
             hard: {
                 givens: [2, 3],  // Very few starting clues!
                 powerUps: { singles: 1, show23: 1, triplets: 0, clearWrongs: 0 },  // Total: 2 power-ups
                 earnRate: 0.5,  // Earn 0.5 Singles per box
                 refillGivens: [2, 3],  // Minimal refill
-                boxesToWin: 9,  // Hard: 9 boxes but BRUTAL
-                laserCooldown: 45  // 45 seconds cooldown
+                boxesToWin: 9  // Hard: 9 boxes but BRUTAL
             }
         };
 
@@ -1495,15 +1734,6 @@
             game.show23Active = false;
             game.scoreMultiplier = 2.0;  // Reset multiplier to 2x
             game.powerUpsUsedThisGame = 0;  // Reset power-up count
-            game.laserHighlightNumber = null;  // Clear laser highlight
-            game.laserHighlightCell = null;
-            game.laserCooldownEnd = null;  // Clear laser cooldown
-            
-            // Clear intervals
-            if (game.laserCooldownInterval) {
-                clearInterval(game.laserCooldownInterval);
-                game.laserCooldownInterval = null;
-            }
             if (game.timerInterval) clearInterval(game.timerInterval);
             
             const settings = DIFFICULTY_SETTINGS[game.difficulty];
@@ -1667,12 +1897,13 @@
                     cell.dataset.col = col;
 
                     const boxId = getBoxId(row, col);
+                    const givenValue = game.grid[row][col];
+                    const userValue = game.userEntries[row][col];
+                    const value = givenValue || userValue;
+                    
                     if (game.clearedBoxes.has(boxId)) {
                         cell.style.background = '#C8E6C9';
                     } else {
-                        const givenValue = game.grid[row][col];
-                        const userValue = game.userEntries[row][col];
-                        const value = givenValue || userValue;
 
                         // Check if we should show options (2-3 leftovers)
                         const shouldShowOptions = game.show23Active && value === 0;
@@ -1733,44 +1964,7 @@
                             cell.classList.add('selected');
                         }
 
-                        // Laser highlight: show ALL instances of this number glowing + their crosshairs
-                        if (game.laserHighlightNumber && game.laserHighlightCell) {
-                            const cellValue = game.grid[row][col] || game.userEntries[row][col];
-                            
-                            // Highlight ALL cells that contain this number (the sources)
-                            if (cellValue === game.laserHighlightNumber) {
-                                cell.classList.add('laser-highlight');
-                            }
-                            
-                            // Also highlight the crosshair lines AND boxes from each instance
-                            for (let r = 0; r < 9; r++) {
-                                for (let c = 0; c < 9; c++) {
-                                    const checkValue = game.grid[r][c] || game.userEntries[r][c];
-                                    if (checkValue === game.laserHighlightNumber) {
-                                        // This cell has the target number
-                                        
-                                        // Draw lines from it (crosshairs)
-                                        if (row === r || col === c) {
-                                            cell.style.background = 'rgba(255, 193, 7, 0.3)';
-                                        }
-                                        
-                                        // Highlight the 3x3 box containing this instance
-                                        const boxStartRow = Math.floor(r / 3) * 3;
-                                        const boxStartCol = Math.floor(c / 3) * 3;
-                                        if (row >= boxStartRow && row < boxStartRow + 3 &&
-                                            col >= boxStartCol && col < boxStartCol + 3) {
-                                            // This cell is in the same box as an instance
-                                            if (!cell.style.background || cell.style.background === '') {
-                                                cell.style.background = 'rgba(255, 193, 7, 0.15)';
-                                            }
-                                        }
-                                    }
-                                }
-                            }
-                        }
-
                         cell.onclick = () => selectCell(row, col);
-                        cell.ondblclick = () => toggleLaserHighlight(row, col);
                     }
 
                     grid.appendChild(cell);
@@ -1782,89 +1976,32 @@
             return Math.floor(row / 3) * 3 + Math.floor(col / 3);
         }
 
-        function updateLaserCooldownDisplay() {
-            const now = Date.now();
-            if (game.laserCooldownEnd && now < game.laserCooldownEnd) {
-                const secondsLeft = Math.ceil((game.laserCooldownEnd - now) / 1000);
-                document.getElementById('message').textContent = `🔦 Laser cooldown: ❌ ${secondsLeft}s`;
-            } else if (game.laserCooldownEnd) {
-                // Cooldown finished
-                game.laserCooldownEnd = null;
-                if (game.laserCooldownInterval) {
-                    clearInterval(game.laserCooldownInterval);
-                    game.laserCooldownInterval = null;
-                }
-                document.getElementById('message').textContent = '🔦 Laser ready! ✓';
-            }
-        }
-
-        function toggleLaserHighlight(row, col) {
-            // Check if laser is on cooldown
-            const now = Date.now();
-            if (game.laserCooldownEnd && now < game.laserCooldownEnd) {
-                const secondsLeft = Math.ceil((game.laserCooldownEnd - now) / 1000);
-                document.getElementById('message').textContent = `🔦 Laser cooldown: ❌ ${secondsLeft}s`;
-                playSound('click');
-                return;
-            }
-
-            const cellValue = game.grid[row][col] || game.userEntries[row][col];
-            
-            // If no value, clear highlight
-            if (!cellValue) {
-                game.laserHighlightNumber = null;
-                game.laserHighlightCell = null;
-                renderGrid();
-                return;
-            }
-            
-            // If clicking same number again (anywhere), clear highlight
-            if (game.laserHighlightNumber === cellValue) {
-                game.laserHighlightNumber = null;
-                game.laserHighlightCell = null;
-                playSound('click');
-                document.getElementById('message').textContent = '🔦 Laser off';
-            } else {
-                // Set new highlight and start cooldown
-                game.laserHighlightNumber = cellValue;
-                game.laserHighlightCell = { row, col };
-                playSound('powerup');
-                
-                // Start cooldown based on difficulty
-                const settings = DIFFICULTY_SETTINGS[game.difficulty];
-                game.laserCooldownEnd = Date.now() + (settings.laserCooldown * 1000);
-                
-                // Clear existing interval if any
-                if (game.laserCooldownInterval) {
-                    clearInterval(game.laserCooldownInterval);
-                }
-                
-                // Start countdown display
-                game.laserCooldownInterval = setInterval(updateLaserCooldownDisplay, 1000);
-                
-                // Show message
-                let displayValue;
-                if (game.displayMode === 'symbols') {
-                    displayValue = SYMBOLS[cellValue];
-                } else if (game.displayMode === 'colors') {
-                    displayValue = COLOR_NAMES[cellValue];
-                } else {
-                    displayValue = cellValue + 's';
-                }
-                document.getElementById('message').textContent = `🔦 Laser: All ${displayValue} are glowing!`;
-            }
-            
-            renderGrid();
-        }
-
         function selectCell(row, col) {
             const boxId = getBoxId(row, col);
             if (game.clearedBoxes.has(boxId)) return;
-            if (game.grid[row][col] !== 0) return;
+            
+            // If clicking on a filled cell (given), just close the pad
+            if (game.grid[row][col] !== 0) {
+                const numberPad = document.getElementById('numberPad');
+                if (numberPad && numberPad.classList.contains('active')) {
+                    numberPad.classList.remove('active');
+                    numberPad.style.display = 'none';
+                    game.selectedCell = null;
+                    renderGrid();
+                }
+                return;
+            }
 
-            // Clear laser highlight when selecting a cell
-            game.laserHighlightNumber = null;
-            game.laserHighlightCell = null;
+            // If clicking a different cell, close old pad first
+            if (game.selectedCell && 
+                (game.selectedCell.row !== row || game.selectedCell.col !== col)) {
+                const numberPad = document.getElementById('numberPad');
+                if (numberPad) {
+                    numberPad.classList.remove('active');
+                    numberPad.style.display = 'none';
+                }
+            }
+
 
             game.selectedCell = { row, col };
             renderGrid();
@@ -1896,6 +2033,14 @@
             const { row, col } = game.selectedCell;
             const options = getOptions(row, col); // Valid options for this cell
             padGrid.innerHTML = '';
+
+            // Ensure mobile uses 5 columns, desktop uses 3 columns
+            const isMobile = window.innerWidth <= 768;
+            if (isMobile) {
+                padGrid.style.gridTemplateColumns = 'repeat(5, 1fr)';
+            } else {
+                padGrid.style.gridTemplateColumns = 'repeat(3, 1fr)';
+            }
 
             // Update title based on difficulty and mode
             const titleElem = numberPad.querySelector('.number-pad-title');
@@ -1942,9 +2087,14 @@
                     // Never fully disable in hard mode - player can make mistakes
                 }
 
+                // Check if mobile - don't set large min-height on mobile
+                const isMobile = window.innerWidth <= 768;
+                
                 if (game.displayMode === 'colors') {
                     button.textContent = ''; // No text in color mode - just color blocks
-                    button.style.minHeight = '55px';
+                    if (!isMobile) {
+                        button.style.minHeight = '50px'; // Only on desktop - matches CSS
+                    }
                     
                     // If disabled, make it GREY - not the color
                     if (!isAvailable && (game.difficulty === 'easy' || game.difficulty === 'medium' || (game.difficulty === 'hard' && game.hardModeHintsVisible))) {
@@ -1955,6 +2105,7 @@
                         // Valid option - show the color
                         button.classList.add('color-mode', `color-${num}`);
                     }
+                    // Don't override minHeight for color mode - use CSS default
                 } else if (game.displayMode === 'symbols') {
                     button.classList.add('symbol-mode', `symbol-${num}`);
                     button.textContent = SYMBOLS[num];
@@ -2021,12 +2172,19 @@
 
                 if (checkBoxComplete(row, col)) {
                     document.getElementById('numberPad').classList.remove('active');
+                    document.getElementById('numberPad').style.display = 'none';
                     game.selectedCell = null;
                     explodeBox(row, col);
                 } else {
                     game.score += Math.floor(10 * game.scoreMultiplier);
                     renderGrid();
-                    renderNumberPad();
+                    // Close pad after entering a number (user wants it to disappear easily)
+                    const numberPad = document.getElementById('numberPad');
+                    if (numberPad) {
+                        numberPad.classList.remove('active');
+                        numberPad.style.display = 'none';
+                        game.selectedCell = null;
+                    }
                     updateStats();
                 }
             }
@@ -2362,21 +2520,34 @@
             }
         });
 
-        // Close number pad when clicking outside (DISABLED FOR NOW)
-        /*
+        // Close number pad when clicking outside (using setTimeout to avoid interfering with other handlers)
         document.addEventListener('click', (e) => {
-            const numberPad = document.getElementById('numberPad');
-            const sudokuGrid = document.getElementById('sudokuGrid');
+            // Capture the target BEFORE any DOM changes
+            const clickedElement = e.target;
+            const isCellClick = clickedElement.classList.contains('cell') || clickedElement.closest('.cell');
+            const isPadButton = clickedElement.classList.contains('number-pad-btn') || clickedElement.closest('.number-pad-btn');
             
-            if (!numberPad.contains(e.target) && !sudokuGrid.contains(e.target)) {
-                if (game.selectedCell && numberPad.classList.contains('active')) {
-                    game.selectedCell = null;
-                    numberPad.classList.remove('active');
-                    renderGrid();
-                }
+            // Don't close if clicking on number pad buttons or grid cells
+            if (isPadButton || isCellClick) {
+                return; // Let the specific handlers work
             }
+            
+            // Use setTimeout so this runs AFTER other click handlers
+            setTimeout(() => {
+                const numberPad = document.getElementById('numberPad');
+                
+                // Close if clicking outside pad and grid (and we didn't click a cell or button)
+                if (game.selectedCell && numberPad && numberPad.classList.contains('active')) {
+                    // Double-check the pad doesn't contain the clicked element
+                    if (!numberPad.contains(clickedElement)) {
+                        numberPad.classList.remove('active');
+                        numberPad.style.display = 'none';
+                        game.selectedCell = null;
+                        renderGrid();
+                    }
+                }
+            }, 0);
         });
-        */
 
         // ============================================
         // POWER-UPS
@@ -2510,6 +2681,27 @@
             document.getElementById('show23Btn').disabled = game.powerUps.show23 === 0;
             document.getElementById('tripletsBtn').disabled = game.powerUps.triplets === 0;
             document.getElementById('clearWrongsBtn').disabled = game.powerUps.clearWrongs === 0;
+
+            // Update mobile power-up counts and buttons
+            const singlesCountMobile = document.getElementById('singlesCountMobile');
+            const show23CountMobile = document.getElementById('show23CountMobile');
+            const tripletsCountMobile = document.getElementById('tripletsCountMobile');
+            const clearWrongsCountMobile = document.getElementById('clearWrongsCountMobile');
+            
+            if (singlesCountMobile) singlesCountMobile.textContent = game.powerUps.singles;
+            if (show23CountMobile) show23CountMobile.textContent = game.powerUps.show23;
+            if (tripletsCountMobile) tripletsCountMobile.textContent = game.powerUps.triplets;
+            if (clearWrongsCountMobile) clearWrongsCountMobile.textContent = game.powerUps.clearWrongs;
+
+            const singlesBtnMobile = document.getElementById('singlesBtnMobile');
+            const show23BtnMobile = document.getElementById('show23BtnMobile');
+            const tripletsBtnMobile = document.getElementById('tripletsBtnMobile');
+            const clearWrongsBtnMobile = document.getElementById('clearWrongsBtnMobile');
+            
+            if (singlesBtnMobile) singlesBtnMobile.disabled = game.powerUps.singles === 0;
+            if (show23BtnMobile) show23BtnMobile.disabled = game.powerUps.show23 === 0;
+            if (tripletsBtnMobile) tripletsBtnMobile.disabled = game.powerUps.triplets === 0;
+            if (clearWrongsBtnMobile) clearWrongsBtnMobile.disabled = game.powerUps.clearWrongs === 0;
         }
 
         function updateTimer() {
