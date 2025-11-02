@@ -108,7 +108,6 @@
 
         .cell.given {
             /* Removed grey background - now using visual indicators instead */
-            background: white !important; /* Ensure white background for all given cells */
             color: #000;
             cursor: default;
             font-weight: 700; /* Bold for prefilled numbers - contrasts with normal weight */
@@ -523,7 +522,7 @@
 
         /* Color mode - make colors appear as circles with padding */
         .cell.color-mode {
-            background: white !important; /* All color mode cells stay white */
+            /* Background stays white from base .cell rule */
         }
         
         .cell.color-mode[class*="color-"] {
@@ -711,11 +710,9 @@
         /* Emoji mode */
         .cell.symbol-mode {
             font-size: 32px;
-            background: white !important; /* Ensure white background like other modes */
         }
 
         .cell.symbol-mode.given {
-            background: white !important; /* Keep white background even for prefilled */
             filter: brightness(0.7); /* Darker emojis for prefilled cells */
         }
 
@@ -1630,14 +1627,14 @@
                     </div>
                 </div>
             </div>
-
+            
             <!-- Number Pad - MOBILE: Below board (2×5 grid), DESKTOP: In right panel (3×3) -->
             <div class="number-pad" id="numberPad">
                 <div class="number-pad-title">✨ Select Number ✨</div>
                 <div class="number-pad-grid" id="numberPadGrid">
-                    <!-- Generated dynamically -->
+                        <!-- Generated dynamically -->
+                    </div>
                 </div>
-            </div>
             
             <!-- Number Pad - RIGHT PANEL (DESKTOP ONLY) -->
             <div class="right-panel">
@@ -2059,9 +2056,9 @@
                     cell.dataset.col = col;
 
                     const boxId = getBoxId(row, col);
-                    const givenValue = game.grid[row][col];
-                    const userValue = game.userEntries[row][col];
-                    const value = givenValue || userValue;
+                        const givenValue = game.grid[row][col];
+                        const userValue = game.userEntries[row][col];
+                        const value = givenValue || userValue;
                     
                     if (game.clearedBoxes.has(boxId)) {
                         cell.style.background = '#C8E6C9';
@@ -2149,11 +2146,11 @@
                     numberPad.classList.remove('active');
                     numberPad.style.display = 'none';
                     game.selectedCell = null;
-                    renderGrid();
+                renderGrid();
                 }
                 return;
             }
-
+            
             // If clicking a different cell, close old pad first
             if (game.selectedCell && 
                 (game.selectedCell.row !== row || game.selectedCell.col !== col)) {
@@ -2251,7 +2248,7 @@
 
                 // Check if mobile - don't set large min-height on mobile
                 const isMobile = window.innerWidth <= 768;
-                
+
                 if (game.displayMode === 'colors') {
                     button.textContent = ''; // No text in color mode - just color blocks
                     if (!isMobile) {
@@ -2696,18 +2693,18 @@
             
             // Use setTimeout so this runs AFTER other click handlers
             setTimeout(() => {
-                const numberPad = document.getElementById('numberPad');
+            const numberPad = document.getElementById('numberPad');
                 
                 // Close if clicking outside pad and grid (and we didn't click a cell or button)
                 if (game.selectedCell && numberPad && numberPad.classList.contains('active')) {
                     // Double-check the pad doesn't contain the clicked element
                     if (!numberPad.contains(clickedElement)) {
-                        numberPad.classList.remove('active');
+                    numberPad.classList.remove('active');
                         numberPad.style.display = 'none';
                         game.selectedCell = null;
-                        renderGrid();
-                    }
+                    renderGrid();
                 }
+            }
             }, 0);
         });
 
