@@ -648,14 +648,44 @@
         } /* Turquoise 🩵 */
 
         .cell.color-mode.given {
-            /* No opacity on cell - keeps white background white */
-            outline: 2px solid #333; /* Thicker outline for prefilled cells - 2/3 of box border (3px) */
-            outline-offset: -2px; /* Makes outline sit inside the cell */
+            /* No outline on cell - using colored border on circle instead */
         }
         
-        /* Apply opacity only to the colored circle for prefilled cells */
-        .cell.color-mode.given::before {
-            opacity: 0.7;
+        /* Add thin colored outline to prefilled circles (darker shade of the color) */
+        .cell.color-mode.given.color-1::before {
+            border: 1.5px solid #D4B900; /* Darker yellow - thin outline */
+        }
+        
+        .cell.color-mode.given.color-2::before {
+            border: 1.5px solid #007744; /* Darker green - thin outline */
+        }
+        
+        .cell.color-mode.given.color-3::before {
+            border: 1.5px solid #1A0000; /* Darker black-red - thin outline */
+        }
+        
+        .cell.color-mode.given.color-4::before {
+            border: 1.5px solid #CC6600; /* Darker orange - thin outline */
+        }
+        
+        .cell.color-mode.given.color-5::before {
+            border: 1.5px solid #CC4444; /* Darker red - thin outline */
+        }
+        
+        .cell.color-mode.given.color-6::before {
+            border: 1.5px solid #660000; /* Darker dark red - thin outline */
+        }
+        
+        .cell.color-mode.given.color-7::before {
+            border: 1.5px solid #002266; /* Darker blue - thin outline */
+        }
+        
+        .cell.color-mode.given.color-8::before {
+            border: 1.5px solid #8B5A2E; /* Darker brown - thin outline */
+        }
+        
+        .cell.color-mode.given.color-9::before {
+            border: 1.5px solid #2CA090; /* Darker turquoise - thin outline */
         }
 
         /* Color dots for options display */
