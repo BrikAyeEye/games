@@ -710,9 +710,11 @@
         /* Emoji mode */
         .cell.symbol-mode {
             font-size: 32px;
+            background: white !important; /* Ensure white background like other modes */
         }
 
         .cell.symbol-mode.given {
+            background: white !important; /* Keep white background even for prefilled */
             filter: brightness(0.7); /* Darker emojis for prefilled cells */
         }
 
