@@ -1731,6 +1731,8 @@
             score: 0,
             boxesCleared: 0,
             clearedBoxes: new Set(),
+            clearedRows: new Set(),
+            clearedColumns: new Set(),
             scoreMultiplier: 2.0,  // Start with 2x multiplier
             powerUpsUsedThisGame: 0,  // Track power-up usage for multiplier
             startTime: null,
@@ -1896,6 +1898,8 @@
             game.score = 0;
             game.boxesCleared = 0;
             game.clearedBoxes.clear();
+            game.clearedRows.clear();
+            game.clearedColumns.clear();
             game.selectedCell = null;
             game.show23Active = false;
             game.scoreMultiplier = 2.0;  // Reset multiplier to 2x
@@ -2345,6 +2349,16 @@
                     document.getElementById('numberPad').style.display = 'none';
                     game.selectedCell = null;
                     explodeBox(row, col);
+                } else if (checkRowComplete(row)) {
+                    document.getElementById('numberPad').classList.remove('active');
+                    document.getElementById('numberPad').style.display = 'none';
+                    game.selectedCell = null;
+                    explodeRow(row);
+                } else if (checkColumnComplete(col)) {
+                    document.getElementById('numberPad').classList.remove('active');
+                    document.getElementById('numberPad').style.display = 'none';
+                    game.selectedCell = null;
+                    explodeColumn(col);
                 } else {
                     game.score += Math.floor(10 * game.scoreMultiplier);
                     renderGrid();
@@ -2422,8 +2436,14 @@
             document.getElementById('sudokuContainer').classList.add('shake');
             setTimeout(() => document.getElementById('sudokuContainer').classList.remove('shake'), 500);
 
-            // Particles
-            createExplosionParticles(boxRow, boxCol);
+            // Particles - centered on the box
+            const container = document.getElementById('sudokuContainer');
+            const rect = container.getBoundingClientRect();
+            const cellWidth = rect.width / 9;
+            const cellHeight = rect.height / 9;
+            const boxCenterX = rect.left + (boxCol + 1.5) * cellWidth;
+            const boxCenterY = rect.top + (boxRow + 1.5) * cellHeight;
+            createExplosionParticles(boxCenterX, boxCenterY);
 
             // Animate explosion
             const cells = document.querySelectorAll('.cell');
@@ -2499,11 +2519,191 @@
             }
         }
 
-        function createExplosionParticles(boxRow, boxCol) {
+        function checkRowComplete(row) {
+            if (game.clearedRows.has(row)) return false;
+
+            for (let c = 0; c < 9; c++) {
+                const val = game.grid[row][c] || game.userEntries[row][c];
+                if (val === 0) return false;
+                if (val !== game.solution[row][c]) return false;
+            }
+
+            return true;
+        }
+
+        function checkColumnComplete(col) {
+            if (game.clearedColumns.has(col)) return false;
+
+            for (let r = 0; r < 9; r++) {
+                const val = game.grid[r][col] || game.userEntries[r][col];
+                if (val === 0) return false;
+                if (val !== game.solution[r][col]) return false;
+            }
+
+            return true;
+        }
+
+        function explodeRow(row) {
+            game.clearedRows.add(row);
+            game.boxesCleared++;
+
+            // Sound and shake
+            playSound('explosion');
+            document.getElementById('sudokuContainer').classList.add('shake');
+            setTimeout(() => document.getElementById('sudokuContainer').classList.remove('shake'), 500);
+
+            // Particles - centered on the row
             const container = document.getElementById('sudokuContainer');
             const rect = container.getBoundingClientRect();
-            const centerX = rect.left + rect.width / 2;
-            const centerY = rect.top + rect.height / 2;
+            const cellHeight = rect.height / 9;
+            const rowCenterY = rect.top + (row + 0.5) * cellHeight;
+            createExplosionParticles(rect.left + rect.width / 2, rowCenterY);
+
+            // Animate explosion
+            const cells = document.querySelectorAll('.cell');
+            cells.forEach((cell, index) => {
+                const r = Math.floor(index / 9);
+                if (r === row) {
+                    cell.classList.add('exploding');
+                }
+            });
+
+            // Calculate score
+            const timeSinceLastAction = (Date.now() - game.lastActionTime) / 1000;
+            const speedBonus = Math.max(0, Math.floor(1000 / (1 + timeSinceLastAction)));
+            const rowBonus = 800; // Slightly more than box since it's harder
+            const totalBonus = rowBonus + speedBonus;
+            
+            game.score += Math.floor(totalBonus * game.scoreMultiplier);
+            game.lastActionTime = Date.now();
+            
+            // Check win condition
+            const settings = DIFFICULTY_SETTINGS[game.difficulty];
+            if (game.boxesCleared >= settings.boxesToWin) {
+                gameWon();
+                return;
+            }
+            game.powerUps.singles += settings.earnRate * 1.5; // More power-ups for row
+
+            showCombo(`💥 Row! +${totalBonus}`);
+
+            setTimeout(() => {
+                game.clearedRows.delete(row);
+                refillRow(row);
+                renderGrid();
+                updateStats();
+                
+                document.getElementById('message').textContent = 
+                    `🎉 Row exploded! +${totalBonus} points!`;
+            }, 600);
+        }
+
+        function explodeColumn(col) {
+            game.clearedColumns.add(col);
+            game.boxesCleared++;
+
+            // Sound and shake
+            playSound('explosion');
+            document.getElementById('sudokuContainer').classList.add('shake');
+            setTimeout(() => document.getElementById('sudokuContainer').classList.remove('shake'), 500);
+
+            // Particles - centered on the column
+            const container = document.getElementById('sudokuContainer');
+            const rect = container.getBoundingClientRect();
+            const cellWidth = rect.width / 9;
+            const colCenterX = rect.left + (col + 0.5) * cellWidth;
+            createExplosionParticles(colCenterX, rect.top + rect.height / 2);
+
+            // Animate explosion
+            const cells = document.querySelectorAll('.cell');
+            cells.forEach((cell, index) => {
+                const c = index % 9;
+                if (c === col) {
+                    cell.classList.add('exploding');
+                }
+            });
+
+            // Calculate score
+            const timeSinceLastAction = (Date.now() - game.lastActionTime) / 1000;
+            const speedBonus = Math.max(0, Math.floor(1000 / (1 + timeSinceLastAction)));
+            const colBonus = 800; // Slightly more than box since it's harder
+            const totalBonus = colBonus + speedBonus;
+            
+            game.score += Math.floor(totalBonus * game.scoreMultiplier);
+            game.lastActionTime = Date.now();
+            
+            // Check win condition
+            const settings = DIFFICULTY_SETTINGS[game.difficulty];
+            if (game.boxesCleared >= settings.boxesToWin) {
+                gameWon();
+                return;
+            }
+            game.powerUps.singles += settings.earnRate * 1.5; // More power-ups for column
+
+            showCombo(`💥 Column! +${totalBonus}`);
+
+            setTimeout(() => {
+                game.clearedColumns.delete(col);
+                refillColumn(col);
+                renderGrid();
+                updateStats();
+                
+                document.getElementById('message').textContent = 
+                    `🎉 Column exploded! +${totalBonus} points!`;
+            }, 600);
+        }
+
+        function refillRow(row) {
+            for (let c = 0; c < 9; c++) {
+                game.grid[row][c] = 0;
+                game.userEntries[row][c] = 0;
+            }
+
+            const settings = DIFFICULTY_SETTINGS[game.difficulty];
+            const [minGivens, maxGivens] = settings.refillGivens;
+            // For rows/columns, use slightly more givens (since they're larger)
+            const numGivens = Math.min(9, minGivens + 2 + Math.floor(Math.random() * (maxGivens - minGivens + 1)));
+
+            const positions = [];
+            for (let c = 0; c < 9; c++) {
+                positions.push([row, c]);
+            }
+
+            shuffle(positions);
+
+            for (let i = 0; i < numGivens; i++) {
+                const [r, c] = positions[i];
+                game.grid[r][c] = game.solution[r][c];
+            }
+        }
+
+        function refillColumn(col) {
+            for (let r = 0; r < 9; r++) {
+                game.grid[r][col] = 0;
+                game.userEntries[r][col] = 0;
+            }
+
+            const settings = DIFFICULTY_SETTINGS[game.difficulty];
+            const [minGivens, maxGivens] = settings.refillGivens;
+            // For rows/columns, use slightly more givens (since they're larger)
+            const numGivens = Math.min(9, minGivens + 2 + Math.floor(Math.random() * (maxGivens - minGivens + 1)));
+
+            const positions = [];
+            for (let r = 0; r < 9; r++) {
+                positions.push([r, col]);
+            }
+
+            shuffle(positions);
+
+            for (let i = 0; i < numGivens; i++) {
+                const [r, c] = positions[i];
+                game.grid[r][c] = game.solution[r][c];
+            }
+        }
+
+        function createExplosionParticles(centerX, centerY) {
+            const x = centerX;
+            const y = centerY;
 
             for (let i = 0; i < 20; i++) {
                 const particle = document.createElement('div');
@@ -2655,6 +2855,16 @@
                         document.getElementById('numberPad').style.display = 'none';
                         game.selectedCell = null;
                         explodeBox(row, col);
+                    } else if (checkRowComplete(row)) {
+                        document.getElementById('numberPad').classList.remove('active');
+                        document.getElementById('numberPad').style.display = 'none';
+                        game.selectedCell = null;
+                        explodeRow(row);
+                    } else if (checkColumnComplete(col)) {
+                        document.getElementById('numberPad').classList.remove('active');
+                        document.getElementById('numberPad').style.display = 'none';
+                        game.selectedCell = null;
+                        explodeColumn(col);
                     } else {
                         game.score += 10;
                         renderGrid();
@@ -2808,11 +3018,29 @@
             renderGrid();
             updateStats();
 
+            // Check boxes
             for (let row = 0; row < 9; row += 3) {
                 for (let col = 0; col < 9; col += 3) {
                     if (checkBoxComplete(row, col)) {
                         explodeBox(row, col);
+                        return; // Only one explosion at a time
                     }
+                }
+            }
+            
+            // Check rows
+            for (let row = 0; row < 9; row++) {
+                if (checkRowComplete(row)) {
+                    explodeRow(row);
+                    return;
+                }
+            }
+            
+            // Check columns
+            for (let col = 0; col < 9; col++) {
+                if (checkColumnComplete(col)) {
+                    explodeColumn(col);
+                    return;
                 }
             }
         }
