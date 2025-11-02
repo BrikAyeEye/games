@@ -521,8 +521,11 @@
         }
 
         /* Color mode - make colors appear as circles with padding */
+        .cell.color-mode {
+            background: white !important; /* All color mode cells stay white */
+        }
+        
         .cell.color-mode[class*="color-"] {
-            background: white !important; /* Base cell stays white */
             position: relative;
         }
         
@@ -645,9 +648,14 @@
         } /* Turquoise 🩵 */
 
         .cell.color-mode.given {
-            opacity: 0.7;
+            /* No opacity on cell - keeps white background white */
             outline: 2px solid #333; /* Thicker outline for prefilled cells - 2/3 of box border (3px) */
             outline-offset: -2px; /* Makes outline sit inside the cell */
+        }
+        
+        /* Apply opacity only to the colored circle for prefilled cells */
+        .cell.color-mode.given::before {
+            opacity: 0.7;
         }
 
         /* Color dots for options display */
