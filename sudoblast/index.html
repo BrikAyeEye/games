@@ -532,6 +532,8 @@
 
         .cell.color-mode.given {
             opacity: 0.7;
+            outline: 2px solid #333; /* Thicker outline for prefilled cells - 2/3 of box border (3px) */
+            outline-offset: -2px; /* Makes outline sit inside the cell */
         }
 
         /* Color dots for options display */
