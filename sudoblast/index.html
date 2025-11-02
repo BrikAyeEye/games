@@ -1660,55 +1660,134 @@
         function playSound(type) {
             if (!soundEnabled) return;
 
-            const oscillator = audioContext.createOscillator();
-            const gainNode = audioContext.createGain();
-            
-            oscillator.connect(gainNode);
-            gainNode.connect(audioContext.destination);
+            const now = audioContext.currentTime;
 
             switch(type) {
                 case 'fill':
-                    oscillator.frequency.value = 400;
-                    gainNode.gain.value = 0.1;
-                    oscillator.start();
-                    oscillator.stop(audioContext.currentTime + 0.05);
+                    // Pleasant pop/click sound with slight pitch variation
+                    const fillOsc = audioContext.createOscillator();
+                    const fillGain = audioContext.createGain();
+                    fillOsc.connect(fillGain);
+                    fillGain.connect(audioContext.destination);
+                    fillOsc.type = 'sine';
+                    fillOsc.frequency.value = 600 + Math.random() * 100;
+                    fillGain.gain.setValueAtTime(0, now);
+                    fillGain.gain.linearRampToValueAtTime(0.12, now + 0.01);
+                    fillGain.gain.exponentialRampToValueAtTime(0.01, now + 0.08);
+                    fillOsc.start(now);
+                    fillOsc.stop(now + 0.08);
                     break;
+
                 case 'explosion':
-                    oscillator.type = 'sawtooth';
-                    oscillator.frequency.value = 200;
-                    gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
-                    gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.5);
-                    oscillator.start();
-                    oscillator.stop(audioContext.currentTime + 0.5);
-                    break;
-                case 'powerup':
-                    oscillator.frequency.value = 800;
-                    gainNode.gain.value = 0.15;
-                    oscillator.start();
-                    oscillator.stop(audioContext.currentTime + 0.1);
+                case 'box':
+                    // Box explosion - medium impact
+                    const boxOsc = audioContext.createOscillator();
+                    const boxGain = audioContext.createGain();
+                    boxOsc.connect(boxGain);
+                    boxGain.connect(audioContext.destination);
+                    boxOsc.type = 'sawtooth';
+                    boxOsc.frequency.setValueAtTime(150, now);
+                    boxOsc.frequency.exponentialRampToValueAtTime(50, now + 0.4);
+                    boxGain.gain.setValueAtTime(0.3, now);
+                    boxGain.gain.exponentialRampToValueAtTime(0.01, now + 0.4);
+                    boxOsc.start(now);
+                    boxOsc.stop(now + 0.4);
+                    
+                    // Add a higher pitched "whoosh"
                     setTimeout(() => {
-                        const osc2 = audioContext.createOscillator();
-                        const gain2 = audioContext.createGain();
-                        osc2.connect(gain2);
-                        gain2.connect(audioContext.destination);
-                        osc2.frequency.value = 1000;
-                        gain2.gain.value = 0.15;
-                        osc2.start();
-                        osc2.stop(audioContext.currentTime + 0.1);
-                    }, 100);
+                        const whoosh = audioContext.createOscillator();
+                        const whooshGain = audioContext.createGain();
+                        whoosh.connect(whooshGain);
+                        whooshGain.connect(audioContext.destination);
+                        whoosh.type = 'sine';
+                        whoosh.frequency.setValueAtTime(800, audioContext.currentTime);
+                        whoosh.frequency.exponentialRampToValueAtTime(200, audioContext.currentTime + 0.2);
+                        whooshGain.gain.setValueAtTime(0.15, audioContext.currentTime);
+                        whooshGain.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.2);
+                        whoosh.start();
+                        whoosh.stop(audioContext.currentTime + 0.2);
+                    }, 50);
                     break;
+
+                case 'row':
+                case 'column':
+                    // Row/Column - more dramatic, longer
+                    const rowOsc = audioContext.createOscillator();
+                    const rowGain = audioContext.createGain();
+                    rowOsc.connect(rowGain);
+                    rowGain.connect(audioContext.destination);
+                    rowOsc.type = 'sawtooth';
+                    rowOsc.frequency.setValueAtTime(200, now);
+                    rowOsc.frequency.exponentialRampToValueAtTime(40, now + 0.6);
+                    rowGain.gain.setValueAtTime(0.4, now);
+                    rowGain.gain.exponentialRampToValueAtTime(0.01, now + 0.6);
+                    rowOsc.start(now);
+                    rowOsc.stop(now + 0.6);
+                    
+                    // Add ascending chord
+                    [400, 500, 600].forEach((freq, i) => {
+                        setTimeout(() => {
+                            const chord = audioContext.createOscillator();
+                            const chordGain = audioContext.createGain();
+                            chord.connect(chordGain);
+                            chordGain.connect(audioContext.destination);
+                            chord.type = 'sine';
+                            chord.frequency.value = freq;
+                            chordGain.gain.setValueAtTime(0.2, audioContext.currentTime);
+                            chordGain.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.15);
+                            chord.start();
+                            chord.stop(audioContext.currentTime + 0.15);
+                        }, i * 50 + 100);
+                    });
+                    break;
+
+                case 'powerup':
+                    // Upward sweep - positive, energetic
+                    const powOsc1 = audioContext.createOscillator();
+                    const powGain1 = audioContext.createGain();
+                    powOsc1.connect(powGain1);
+                    powGain1.connect(audioContext.destination);
+                    powOsc1.type = 'sine';
+                    powOsc1.frequency.setValueAtTime(400, now);
+                    powOsc1.frequency.exponentialRampToValueAtTime(800, now + 0.12);
+                    powGain1.gain.setValueAtTime(0.15, now);
+                    powGain1.gain.exponentialRampToValueAtTime(0.01, now + 0.12);
+                    powOsc1.start(now);
+                    powOsc1.stop(now + 0.12);
+                    
+                    setTimeout(() => {
+                        const powOsc2 = audioContext.createOscillator();
+                        const powGain2 = audioContext.createGain();
+                        powOsc2.connect(powGain2);
+                        powGain2.connect(audioContext.destination);
+                        powOsc2.type = 'sine';
+                        powOsc2.frequency.setValueAtTime(800, audioContext.currentTime);
+                        powOsc2.frequency.exponentialRampToValueAtTime(1200, audioContext.currentTime + 0.1);
+                        powGain2.gain.setValueAtTime(0.18, audioContext.currentTime);
+                        powGain2.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.1);
+                        powOsc2.start();
+                        powOsc2.stop(audioContext.currentTime + 0.1);
+                    }, 80);
+                    break;
+
                 case 'win':
-                    [400, 500, 600, 800].forEach((freq, i) => {
+                case 'success':
+                    // Victory fanfare - ascending major chord
+                    const notes = [523.25, 659.25, 783.99, 1046.50]; // C, E, G, C (major chord)
+                    notes.forEach((freq, i) => {
                         setTimeout(() => {
                             const osc = audioContext.createOscillator();
                             const gain = audioContext.createGain();
                             osc.connect(gain);
                             gain.connect(audioContext.destination);
+                            osc.type = 'sine';
                             osc.frequency.value = freq;
-                            gain.gain.value = 0.2;
+                            gain.gain.setValueAtTime(0, audioContext.currentTime);
+                            gain.gain.linearRampToValueAtTime(0.25, audioContext.currentTime + 0.05);
+                            gain.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.3);
                             osc.start();
-                            osc.stop(audioContext.currentTime + 0.2);
-                        }, i * 100);
+                            osc.stop(audioContext.currentTime + 0.3);
+                        }, i * 120);
                     });
                     break;
             }
@@ -2432,7 +2511,7 @@
             game.boxesCleared++;
 
             // Sound and shake
-            playSound('explosion');
+            playSound('box');
             document.getElementById('sudokuContainer').classList.add('shake');
             setTimeout(() => document.getElementById('sudokuContainer').classList.remove('shake'), 500);
 
@@ -2548,7 +2627,7 @@
             game.boxesCleared++;
 
             // Sound and shake
-            playSound('explosion');
+            playSound('box');
             document.getElementById('sudokuContainer').classList.add('shake');
             setTimeout(() => document.getElementById('sudokuContainer').classList.remove('shake'), 500);
 
@@ -2603,7 +2682,7 @@
             game.boxesCleared++;
 
             // Sound and shake
-            playSound('explosion');
+            playSound('box');
             document.getElementById('sudokuContainer').classList.add('shake');
             setTimeout(() => document.getElementById('sudokuContainer').classList.remove('shake'), 500);
 
