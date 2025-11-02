@@ -713,7 +713,8 @@
         }
 
         .cell.symbol-mode.given {
-            filter: brightness(0.7); /* Darker emojis for prefilled cells */
+            /* Removed filter: brightness(0.7) - it was darkening the white background making it look grey */
+            opacity: 0.8; /* Slightly fade the emoji instead of darkening the whole cell */
         }
 
         /* Emoji symbols - no special styling needed, they look great as-is! */
