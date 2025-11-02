@@ -2627,7 +2627,7 @@
             game.boxesCleared++;
 
             // Sound and shake
-            playSound('box');
+            playSound('row');
             document.getElementById('sudokuContainer').classList.add('shake');
             setTimeout(() => document.getElementById('sudokuContainer').classList.remove('shake'), 500);
 
@@ -2682,7 +2682,7 @@
             game.boxesCleared++;
 
             // Sound and shake
-            playSound('box');
+            playSound('column');
             document.getElementById('sudokuContainer').classList.add('shake');
             setTimeout(() => document.getElementById('sudokuContainer').classList.remove('shake'), 500);
 
