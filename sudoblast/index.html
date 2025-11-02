@@ -710,10 +710,18 @@
         /* Emoji mode */
         .cell.symbol-mode {
             font-size: 32px;
+            background: white;
         }
 
+        /* User-filled emojis: slightly pale */
+        .cell.symbol-mode:not(.given) {
+            opacity: 0.85;
+        }
+
+        /* Prefilled emojis: full opacity (darker/more prominent) */
         .cell.symbol-mode.given {
-            /* No darkening needed - emojis are already distinguishable by being prefilled */
+            background: white;
+            opacity: 1;
         }
 
         /* Emoji symbols - no special styling needed, they look great as-is! */
