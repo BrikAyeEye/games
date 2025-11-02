@@ -713,15 +713,14 @@
             background: white;
         }
 
-        /* User-filled emojis: slightly pale */
-        .cell.symbol-mode:not(.given) {
+        /* User-filled emojis: slightly pale (applied to span wrapper, not cell) */
+        .cell.symbol-mode:not(.given) .emoji-text {
             opacity: 0.85;
         }
 
-        /* Prefilled emojis: full opacity (darker/more prominent) */
+        /* Prefilled emojis: full opacity */
         .cell.symbol-mode.given {
             background: white;
-            opacity: 1;
         }
 
         /* Emoji symbols - no special styling needed, they look great as-is! */
@@ -2101,7 +2100,11 @@
                         } else if (game.displayMode === 'symbols') {
                             cell.classList.add('symbol-mode');
                             if (value !== 0) {
-                                cell.textContent = SYMBOLS[value];
+                                // Wrap emoji in span so we can apply opacity without affecting cell background
+                                const emojiSpan = document.createElement('span');
+                                emojiSpan.className = 'emoji-text';
+                                emojiSpan.textContent = SYMBOLS[value];
+                                cell.appendChild(emojiSpan);
                                 cell.classList.add(`symbol-${value}`);
                                 if (givenValue !== 0) {
                                     cell.classList.add('given');
