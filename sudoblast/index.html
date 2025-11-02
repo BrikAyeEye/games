@@ -520,15 +520,129 @@
             font-size: 0;
         }
 
-        .cell.color-mode.color-1 { background: #FFE135 !important; box-shadow: inset 0 0 10px rgba(255,255,255,0.3); } /* Banana Yellow 🍌 */
-        .cell.color-mode.color-2 { background: #00AA66 !important; box-shadow: inset 0 0 10px rgba(255,255,255,0.3); } /* Mineral Bottle Green 🍾 */
-        .cell.color-mode.color-3 { background: #2A0000 !important; box-shadow: inset 0 0 10px rgba(255,0,0,0.3); } /* Black with red hue 🔴 */
-        .cell.color-mode.color-4 { background: #FF8800 !important; box-shadow: inset 0 0 10px rgba(255,255,255,0.3); } /* Orange 🧡 */
-        .cell.color-mode.color-5 { background: #FF6B6B !important; box-shadow: inset 0 0 10px rgba(255,255,255,0.3); } /* Pale Red 🌸 */
-        .cell.color-mode.color-6 { background: #8B0000 !important; box-shadow: inset 0 0 10px rgba(255,255,255,0.3); } /* Dark Red 🔴 */
-        .cell.color-mode.color-7 { background: #003399 !important; box-shadow: inset 0 0 10px rgba(255,255,255,0.3); } /* Dark Blue 🔷 */
-        .cell.color-mode.color-8 { background: #B8763E !important; box-shadow: inset 0 0 10px rgba(255,255,255,0.3); } /* Light Brown 🍫 */
-        .cell.color-mode.color-9 { background: #40E0D0 !important; box-shadow: inset 0 0 10px rgba(255,255,255,0.3); } /* Turquoise 🩵 */
+        /* Color mode - make colors appear as circles with padding */
+        .cell.color-mode[class*="color-"] {
+            background: white !important; /* Base cell stays white */
+            position: relative;
+        }
+        
+        /* Create circular colored element using ::before pseudo-element */
+        .cell.color-mode.color-1::before { 
+            content: '';
+            position: absolute;
+            top: 4px;
+            left: 4px;
+            right: 4px;
+            bottom: 4px;
+            background: #FFE135;
+            border-radius: 50%;
+            box-shadow: inset 0 0 10px rgba(255,255,255,0.3);
+            z-index: 1;
+        } /* Banana Yellow 🍌 */
+        
+        .cell.color-mode.color-2::before { 
+            content: '';
+            position: absolute;
+            top: 4px;
+            left: 4px;
+            right: 4px;
+            bottom: 4px;
+            background: #00AA66;
+            border-radius: 50%;
+            box-shadow: inset 0 0 10px rgba(255,255,255,0.3);
+            z-index: 1;
+        } /* Mineral Bottle Green 🍾 */
+        
+        .cell.color-mode.color-3::before { 
+            content: '';
+            position: absolute;
+            top: 4px;
+            left: 4px;
+            right: 4px;
+            bottom: 4px;
+            background: #2A0000;
+            border-radius: 50%;
+            box-shadow: inset 0 0 10px rgba(255,0,0,0.3);
+            z-index: 1;
+        } /* Black with red hue 🔴 */
+        
+        .cell.color-mode.color-4::before { 
+            content: '';
+            position: absolute;
+            top: 4px;
+            left: 4px;
+            right: 4px;
+            bottom: 4px;
+            background: #FF8800;
+            border-radius: 50%;
+            box-shadow: inset 0 0 10px rgba(255,255,255,0.3);
+            z-index: 1;
+        } /* Orange 🧡 */
+        
+        .cell.color-mode.color-5::before { 
+            content: '';
+            position: absolute;
+            top: 4px;
+            left: 4px;
+            right: 4px;
+            bottom: 4px;
+            background: #FF6B6B;
+            border-radius: 50%;
+            box-shadow: inset 0 0 10px rgba(255,255,255,0.3);
+            z-index: 1;
+        } /* Pale Red 🌸 */
+        
+        .cell.color-mode.color-6::before { 
+            content: '';
+            position: absolute;
+            top: 4px;
+            left: 4px;
+            right: 4px;
+            bottom: 4px;
+            background: #8B0000;
+            border-radius: 50%;
+            box-shadow: inset 0 0 10px rgba(255,255,255,0.3);
+            z-index: 1;
+        } /* Dark Red 🔴 */
+        
+        .cell.color-mode.color-7::before { 
+            content: '';
+            position: absolute;
+            top: 4px;
+            left: 4px;
+            right: 4px;
+            bottom: 4px;
+            background: #003399;
+            border-radius: 50%;
+            box-shadow: inset 0 0 10px rgba(255,255,255,0.3);
+            z-index: 1;
+        } /* Dark Blue 🔷 */
+        
+        .cell.color-mode.color-8::before { 
+            content: '';
+            position: absolute;
+            top: 4px;
+            left: 4px;
+            right: 4px;
+            bottom: 4px;
+            background: #B8763E;
+            border-radius: 50%;
+            box-shadow: inset 0 0 10px rgba(255,255,255,0.3);
+            z-index: 1;
+        } /* Light Brown 🍫 */
+        
+        .cell.color-mode.color-9::before { 
+            content: '';
+            position: absolute;
+            top: 4px;
+            left: 4px;
+            right: 4px;
+            bottom: 4px;
+            background: #40E0D0;
+            border-radius: 50%;
+            box-shadow: inset 0 0 10px rgba(255,255,255,0.3);
+            z-index: 1;
+        } /* Turquoise 🩵 */
 
         .cell.color-mode.given {
             opacity: 0.7;
